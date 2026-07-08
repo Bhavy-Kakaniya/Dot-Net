@@ -1,0 +1,68 @@
+const activities = [
+  {
+    id: 1,
+    user: 'Alice Johnson',
+    action: 'completed task',
+    target: 'Design UI mockups',
+    timestamp: '2025-07-07T14:30:00',
+    type: 'task',
+  },
+  {
+    id: 2,
+    user: 'Dr. Robert Chen',
+    action: 'updated project',
+    target: 'Smart Campus Navigation App',
+    timestamp: '2025-07-07T11:15:00',
+    type: 'project',
+  },
+  {
+    id: 3,
+    user: 'Maria Garcia',
+    action: 'submitted task for review',
+    target: 'Deploy smart contract',
+    timestamp: '2025-07-06T16:45:00',
+    type: 'task',
+  },
+  {
+    id: 4,
+    user: 'Admin User',
+    action: 'added new user',
+    target: 'James Wilson',
+    timestamp: '2025-07-06T09:00:00',
+    type: 'user',
+  },
+  {
+    id: 5,
+    user: 'Sarah Lee',
+    action: 'started working on',
+    target: 'Implement BLE beacon integration',
+    timestamp: '2025-07-05T10:20:00',
+    type: 'task',
+  },
+  {
+    id: 6,
+    user: 'Dr. Emily Davis',
+    action: 'created project',
+    target: 'Blockchain Certificate Verification',
+    timestamp: '2025-07-04T13:00:00',
+    type: 'project',
+  },
+  {
+    id: 7,
+    user: 'Michael Brown',
+    action: 'updated status of',
+    target: 'API endpoint development',
+    timestamp: '2025-07-03T15:30:00',
+    type: 'task',
+  },
+  {
+    id: 8,
+    user: 'Admin User',
+    action: 'assigned role',
+    target: 'Student to James Wilson',
+    timestamp: '2025-07-02T08:45:00',
+    type: 'role',
+  },
+];
+
+export default activities;
