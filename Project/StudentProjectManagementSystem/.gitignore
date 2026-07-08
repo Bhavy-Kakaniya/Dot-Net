@@ -1,0 +1,42 @@
+# Build folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.rsuser
+*.suo
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+
+# Logs
+*.log
+logs/
+
+# EF Core migration bundle
+efbundle
+
+# Publish output
+publish/
+
+# Test Results
+TestResults/
+
+# NuGet packages (if using local packages)
+packages/
+
+appsettings.Development.json
