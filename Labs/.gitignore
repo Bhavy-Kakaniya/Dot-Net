@@ -16,6 +16,5 @@ obj/
 *.rsuser
 *.suo
 
-# OS files
 .DS_Store
 Thumbs.db
