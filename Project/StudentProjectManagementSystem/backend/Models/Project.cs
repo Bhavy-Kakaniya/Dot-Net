@@ -19,10 +19,10 @@ public class Project
     [StringLength(100)]
     public string Technology { get; set; } = string.Empty;
 
-    [Required]
+    [DataType(DataType.Date)]
     public DateTime StartDate { get; set; }
 
-    [Required]
+    [DataType(DataType.Date)]
     public DateTime EndDate { get; set; }
 
     [Required]

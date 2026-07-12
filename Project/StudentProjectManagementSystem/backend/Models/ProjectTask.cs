@@ -18,7 +18,7 @@ public class ProjectTask
     [StringLength(1000)]
     public string Description { get; set; } = string.Empty;
 
-    [Required]
+    [DataType(DataType.Date)]
     public DateTime DueDate { get; set; }
 
     [Required]

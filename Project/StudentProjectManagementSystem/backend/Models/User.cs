@@ -18,7 +18,7 @@ public class User
 
     [Required]
     [StringLength(255)]
-    public string Password { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
 
     [Phone]
     [StringLength(15)]
