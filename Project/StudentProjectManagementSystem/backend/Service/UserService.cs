@@ -2,13 +2,13 @@ using StudentProjectManagementSystem.DTOs.user;
 using StudentProjectManagementSystem.DTOs.User;
 using StudentProjectManagementSystem.Interfaces;
 using StudentProjectManagementSystem.Models;
-using StudentProjectManagementSystem.Repositories;
 
 namespace StudentProjectManagementSystem.Service
 {
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+
         public UserService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
@@ -38,9 +38,15 @@ namespace StudentProjectManagementSystem.Service
             };
         }
 
-        public Task<bool> DeleteUserAsync(int id)
+        public async Task<bool> DeleteUserAsync(int id)
         {
-            throw new NotImplementedException();
+            var user = await _userRepository.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return false;
+            }
+            await _userRepository.DeleteUserAsync(user);
+            return true;
         }
 
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
@@ -69,9 +75,18 @@ namespace StudentProjectManagementSystem.Service
             };
         }
 
-        public Task<bool> UpdateUserAsync(int id, UpdateUserDto updateUserDto)
+        public async Task<bool> UpdateUserAsync(int id, UpdateUserDto updateUserDto)
         {
-            throw new NotImplementedException();
+            var user = await _userRepository.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return false;
+            }
+            user.FullName = updateUserDto.FullName;
+            user.Email = updateUserDto.Email;
+
+            await _userRepository.UpdateUserAsync(user);
+            return true;
         }
     }
 }

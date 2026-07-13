@@ -11,5 +11,6 @@ namespace StudentProjectManagementSystem.Interfaces
         Task UpdateUserAsync(User user);
         Task<bool> UserExistsAsync(int id);
         Task<bool> EmailExistsAsync(string email);
+        Task DeleteUserAsync(User user);
     }
 }
