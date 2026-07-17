@@ -44,14 +44,42 @@ namespace StudentProjectManagementSystem.Controllers
         [HttpPost]
         public async Task<ActionResult<UserResponseDto>> CreateUser(CreateUserDto createUserDto)
         {
-            var createdUser = await _userService.CreateUserAsync(createUserDto);
+            try
+            {
+                var createdUser = await _userService.CreateUserAsync(createUserDto);
 
-            return CreatedAtAction( // returns 201
-                nameof(GetUserById),
-                new { id = createdUser.UserId },
-                createdUser
-            );
+                return CreatedAtAction(
+                    nameof(GetUserById),
+                    new { id = createdUser.UserId },
+                    createdUser
+                );
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
         }
-        
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
+        {
+            var updated = await _userService.UpdateUserAsync(id, updateUserDto);
+            if (!updated)
+            {
+                return NotFound(new { message = $"user with {id} not found" });
+            }
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var deleted = await _userService.DeleteUserAsync(id);
+            if (!deleted)
+            {
+                return NotFound(new { message = $"user with {id} not found" });
+            }
+            return NoContent();
+        }
     }
 }
