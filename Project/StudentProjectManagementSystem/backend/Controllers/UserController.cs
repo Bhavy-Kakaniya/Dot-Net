@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using StudentProjectManagementSystem.DTOs.user;
 using StudentProjectManagementSystem.DTOs.User;
 using StudentProjectManagementSystem.Interfaces;
+using StudentProjectManagementSystem.Models;
 
 // Repository: Task<IEnumerable<User>>
 // Service: Task<IEnumerable<UserResponseDto>>
@@ -39,6 +41,17 @@ namespace StudentProjectManagementSystem.Controllers
             return Ok(user);
         }
 
+        [HttpPost]
+        public async Task<ActionResult<UserResponseDto>> CreateUser(CreateUserDto createUserDto)
+        {
+            var createdUser = await _userService.CreateUserAsync(createUserDto);
+
+            return CreatedAtAction( // returns 201
+                nameof(GetUserById),
+                new { id = createdUser.UserId },
+                createdUser
+            );
+        }
         
     }
 }
