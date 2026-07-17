@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using StudentProjectManagementSystem.DTOs.User;
 using StudentProjectManagementSystem.Interfaces;
 
+// Repository: Task<IEnumerable<User>>
+// Service: Task<IEnumerable<UserResponseDto>>
+// Controller: Task<ActionResult<IEnumerable<UserResponseDto>>>
+
 namespace StudentProjectManagementSystem.Controllers
 {
     [ApiController]
@@ -23,6 +27,18 @@ namespace StudentProjectManagementSystem.Controllers
             var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserResponseDto>> GetUserById(int id)
+        {
+            var user = await _userService.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { Message = $"user with {id} not found" });
+            }
+            return Ok(user);
+        }
+
         
     }
 }
