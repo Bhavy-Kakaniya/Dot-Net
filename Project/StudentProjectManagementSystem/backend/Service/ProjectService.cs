@@ -53,12 +53,38 @@ namespace StudentProjectManagementSystem.Service
 
         public async Task<IEnumerable<ProjectResponseDto>> GetAllProjectsAsync()
         {
-            throw new NotImplementedException();
+            var projects = await _projectRepository.GetAllProjectsAsync();
+
+            return projects.Select(p => new ProjectResponseDto
+            {
+                CreatedByUserId = p.CreatedByUserId,
+                Description = p.Description,
+                EndDate = p.EndDate,
+                ProjectId = p.ProjectId,
+                StartDate = p.StartDate,
+                Technology = p.Technology,
+                Title = p.Title
+            });
         }
 
         public async Task<ProjectResponseDto?> GetProjectByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            var project = await _projectRepository.GetProjectByIdAsync(id);
+            if (project == null)
+            {
+                return null;
+            }
+
+            return new ProjectResponseDto
+            {
+                CreatedByUserId = project.CreatedByUserId,
+                Description = project.Description,
+                EndDate = project.EndDate,
+                StartDate = project.StartDate,
+                ProjectId = project.ProjectId,
+                Technology = project.Technology,
+                Title = project.Title
+            };
         }
 
         public async Task<bool> UpdateProjectAsync(int id, UpdateProjectDto updateProjectDto)
