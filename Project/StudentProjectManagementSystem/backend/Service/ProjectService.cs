@@ -48,7 +48,14 @@ namespace StudentProjectManagementSystem.Service
 
         public async Task<bool> DeleteProjectAsync(int id)
         {
-            throw new NotImplementedException();
+            var project = await _projectRepository.GetProjectByIdAsync(id);
+            if (project == null)
+            {
+                return false;
+            }
+
+            await _projectRepository.DeleteProjectAsync(project);
+            return true;
         }
 
         public async Task<IEnumerable<ProjectResponseDto>> GetAllProjectsAsync()
@@ -87,9 +94,36 @@ namespace StudentProjectManagementSystem.Service
             };
         }
 
-        public async Task<bool> UpdateProjectAsync(int id, UpdateProjectDto updateProjectDto)
+        public async Task<ProjectResponseDto> UpdateProjectAsync(int id, UpdateProjectDto updateProjectDto)
         {
-            throw new NotImplementedException();
+            if (!await _projectRepository.ProjectExistsAsync(id))
+            {
+                return null;
+            }
+            if (!await _userRepository.UserExistsAsync(id))
+            {
+                throw new InvalidOperationException("Created By User does not exist");
+            }
+
+            var project = await _projectRepository.GetProjectByIdAsync(id);
+            project!.Title = updateProjectDto.Title;
+            project.Description = updateProjectDto.Description;
+            project.Technology = updateProjectDto.Technology;
+            project.StartDate = updateProjectDto.StartDate;
+            project.EndDate = updateProjectDto.EndDate;
+            project.CreatedByUserId = updateProjectDto.CreatedByUserId;
+
+            await _projectRepository.UpdateProjectAsync(project);
+            return new ProjectResponseDto
+            {
+                ProjectId = project.ProjectId,
+                Title = project.Title,
+                Description = project.Description,
+                Technology = project.Technology,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                CreatedByUserId = project.CreatedByUserId
+            };
         }
     }
 }
