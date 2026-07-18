@@ -94,18 +94,15 @@ namespace StudentProjectManagementSystem.Service
             };
         }
 
-        public async Task<ProjectResponseDto> UpdateProjectAsync(int id, UpdateProjectDto updateProjectDto)
+        public async Task<ProjectResponseDto?> UpdateProjectAsync(int id, UpdateProjectDto updateProjectDto)
         {
-            if (!await _projectRepository.ProjectExistsAsync(id))
-            {
-                return null;
-            }
-            if (!await _userRepository.UserExistsAsync(id))
-            {
-                throw new InvalidOperationException("Created By User does not exist");
-            }
-
             var project = await _projectRepository.GetProjectByIdAsync(id);
+            if (project == null)
+                return null;
+
+            if (!await _userRepository.UserExistsAsync(updateProjectDto.CreatedByUserId))
+                throw new InvalidOperationException("Created By User does not exist");
+
             project!.Title = updateProjectDto.Title;
             project.Description = updateProjectDto.Description;
             project.Technology = updateProjectDto.Technology;

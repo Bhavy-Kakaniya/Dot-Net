@@ -7,7 +7,7 @@ namespace StudentProjectManagementSystem.Interfaces
         Task<IEnumerable<ProjectResponseDto>> GetAllProjectsAsync();
         Task<ProjectResponseDto?> GetProjectByIdAsync(int id);
         Task<ProjectResponseDto> CreateProjectAsync(CreateProjectDto updateProjectDto);
-        Task<ProjectResponseDto> UpdateProjectAsync(int id, UpdateProjectDto updateProjectDto);
+        Task<ProjectResponseDto?> UpdateProjectAsync(int id, UpdateProjectDto updateProjectDto);
         Task<bool> DeleteProjectAsync(int id);
     }
 }
