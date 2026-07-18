@@ -1,6 +1,6 @@
 namespace StudentProjectManagementSystem.DTOs.Project
 {
-    public class ProjectDto
+    public class ProjectResponseDto
     {
         public int ProjectId { get; set; }
         public string Title { get; set; } = string.Empty;
