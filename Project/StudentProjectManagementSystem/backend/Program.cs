@@ -20,6 +20,9 @@ builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<IStatusRepository, StatusRepository>();
 builder.Services.AddScoped<IStatusService, StatusService>();
 
+builder.Services.AddScoped<IProjectTaskRepository, ProjectTaskRepository>();
+builder.Services.AddScoped<IProjectTaskService, ProjectTaskService>();
+
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
