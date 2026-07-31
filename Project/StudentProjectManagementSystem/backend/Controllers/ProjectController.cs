@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using StudentProjectManagementSystem.DTOs.Project;
-using StudentProjectManagementSystem.DTOs.user;
-using StudentProjectManagementSystem.DTOs.User;
 using StudentProjectManagementSystem.Interfaces;
 
 namespace StudentProjectManagementSystem.Controllers
@@ -39,10 +37,7 @@ namespace StudentProjectManagementSystem.Controllers
         {
             var project = await _projectService.CreateProjectAsync(createProjectDto);
 
-            return CreatedAtAction(
-                nameof(GetProjectById),
-                new { id = project.ProjectId },
-                project);
+            return CreatedAtAction("GetProjectById", new { id = project.ProjectId }, project);
         }
 
         [HttpPut("{id}")]
