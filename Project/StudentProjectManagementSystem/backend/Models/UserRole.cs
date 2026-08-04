@@ -10,10 +10,10 @@ public class UserRole
     [Required]
     public int UserId { get; set; }
 
+    public User? User { get; set; }
+
     [Required]
     public int RoleId { get; set; }
-
-    public User? User { get; set; }
 
     public Role? Role { get; set; }
 }
