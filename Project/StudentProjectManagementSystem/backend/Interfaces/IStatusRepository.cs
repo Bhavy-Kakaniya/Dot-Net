@@ -4,14 +4,10 @@ namespace StudentProjectManagementSystem.Interfaces
 {
     public interface IStatusRepository
     {
-        Task<IEnumerable<Status>> GetAllStatusesAsync();
-
-        Task<Status?> GetStatusByIdAsync(int id);
-
-        Task<Status> CreateStatusAsync(Status status);
-
-        Task<Status?> UpdateStatusAsync(Status status);
-
+        Task<IEnumerable<ProjectTaskStatus>> GetAllStatusesAsync();
+        Task<ProjectTaskStatus?> GetStatusByIdAsync(int id);
+        Task<ProjectTaskStatus> CreateStatusAsync(ProjectTaskStatus status);
+        Task<ProjectTaskStatus?> UpdateStatusAsync(ProjectTaskStatus status);
         Task<bool> DeleteStatusAsync(int id);
     }
 }

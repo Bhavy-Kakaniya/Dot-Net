@@ -1,35 +1,47 @@
 using System.ComponentModel.DataAnnotations;
-
 namespace StudentProjectManagementSystem.Models;
 
 public class ProjectTask
 {
     [Key]
-    public int ProjectTaskId { get; set; }
+    public int TaskId { get; set; }
 
     [Required]
-    public int ProjectId { get; set; }
+    public int ProjectAllocationId { get; set; }
+
+    public ProjectAllocation? ProjectAllocation { get; set; }
 
     [Required]
-    [StringLength(150)]
-    public string Title { get; set; } = string.Empty;
+    [StringLength(200)]
+    public string TaskTitle { get; set; } = string.Empty;
+
+    public string? TaskDescription { get; set; }
 
     [Required]
-    [StringLength(1000)]
-    public string Description { get; set; } = string.Empty;
+    public DateTime AssignedDate { get; set; }
 
-    [DataType(DataType.Date)]
+    [Required]
     public DateTime DueDate { get; set; }
 
-    [Required]
-    public int StatusId { get; set; }
+    public DateTime? SubmissionDate { get; set; }
 
     [Required]
-    public int PriorityId { get; set; }
+    public int AssignedByFacultyId { get; set; }
 
-    public Project? Project { get; set; }
+    public User? AssignedByFaculty { get; set; }
 
-    public Status? Status { get; set; }
+    [Required]
+    public int AssignedToStudentId { get; set; }
 
-    public Priority? Priority { get; set; }
+    public User? AssignedToStudent { get; set; }
+
+    [Required]
+    public int TaskStatusId { get; set; }
+
+    public ProjectTaskStatus? ProjectTaskStatus { get; set; }
+
+    [Required]
+    public int ProjectTaskPriorityId { get; set; }
+
+    public ProjectTaskPriority? ProjectTaskPriority { get; set; }
 }

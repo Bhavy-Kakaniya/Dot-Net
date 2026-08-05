@@ -13,7 +13,7 @@ public class Project
 
     [Required]
     [StringLength(1000)]
-    public string Description { get; set; } = string.Empty;
+    public string StatusName { get; set; } = string.Empty;
 
     public ICollection<ProjectAllocation> ProjectAllocations { get; set; } = new List<ProjectAllocation>();
 }

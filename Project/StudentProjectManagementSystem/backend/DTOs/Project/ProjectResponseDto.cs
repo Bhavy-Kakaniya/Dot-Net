@@ -6,6 +6,6 @@ namespace StudentProjectManagementSystem.DTOs.Project
 
         public string ProjectTitle { get; set; } = string.Empty;
 
-        public string Description { get; set; } = string.Empty;
+        public string StatusName { get; set; } = string.Empty;
     }
 }

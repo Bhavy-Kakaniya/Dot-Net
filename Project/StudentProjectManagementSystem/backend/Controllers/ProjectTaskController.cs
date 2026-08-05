@@ -36,15 +36,8 @@ namespace StudentProjectManagementSystem.Controllers
         [HttpPost]
         public async Task<ActionResult<ProjectTaskResponseDto>> CreateProjectTask(CreateProjectTaskDto createProjectTaskDto)
         {
-            try
-            {
-                var projectTask = await _projectTaskService.CreateProjectTaskAsync(createProjectTaskDto);
-                return CreatedAtAction(nameof(GetProjectTaskById), new { id = projectTask.ProjectTaskId }, projectTask);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var task = await _projectTaskService.CreateProjectTaskAsync(createProjectTaskDto);
+            return CreatedAtAction(nameof(GetProjectTaskById),new { id = task.TaskId },task);
         }
 
         [HttpPut("{id}")]

@@ -42,5 +42,8 @@ public class User
 
     public ICollection<Project> Projects { get; set; } = new List<Project>();
 
+    public ICollection<ProjectAllocation> StudentProjectAllocations { get; set; } = new List<ProjectAllocation>();
     public ICollection<ProjectAllocation> FacultyProjectAllocations { get; set; } = new List<ProjectAllocation>();
+    public ICollection<ProjectTask> AssignedTasks { get; set; } = new List<ProjectTask>();
+    public ICollection<ProjectTask> CreatedTasks { get; set; } = new List<ProjectTask>();
 }

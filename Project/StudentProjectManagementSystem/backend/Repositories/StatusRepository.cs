@@ -14,38 +14,41 @@ namespace StudentProjectManagementSystem.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Status>> GetAllStatusesAsync()
+        public async Task<IEnumerable<ProjectTaskStatus>> GetAllStatusesAsync()
         {
-            return await _context.Statuses.ToListAsync();
+            return await _context.TaskStatuses.ToListAsync();
         }
 
-        public async Task<Status?> GetStatusByIdAsync(int id)
+        public async Task<ProjectTaskStatus?> GetStatusByIdAsync(int id)
         {
-            return await _context.Statuses.FirstOrDefaultAsync(s => s.StatusId == id);
+            return await _context.TaskStatuses
+                .FirstOrDefaultAsync(s => s.TaskStatusId == id);
         }
 
-        public async Task<Status> CreateStatusAsync(Status status)
+        public async Task<ProjectTaskStatus> CreateStatusAsync(ProjectTaskStatus status)
         {
-            _context.Statuses.Add(status);
+            _context.TaskStatuses.Add(status);
             await _context.SaveChangesAsync();
             return status;
         }
 
-        public async Task<Status?> UpdateStatusAsync(Status status)
+        public async Task<ProjectTaskStatus?> UpdateStatusAsync(ProjectTaskStatus status)
         {
-            _context.Statuses.Update(status);
+            _context.TaskStatuses.Update(status);
             await _context.SaveChangesAsync();
             return status;
         }
 
         public async Task<bool> DeleteStatusAsync(int id)
         {
-            var status = await _context.Statuses.FindAsync(id);
+            var status = await _context.TaskStatuses.FindAsync(id);
+
             if (status == null)
                 return false;
 
-            _context.Statuses.Remove(status);
+            _context.TaskStatuses.Remove(status);
             await _context.SaveChangesAsync();
+
             return true;
         }
     }

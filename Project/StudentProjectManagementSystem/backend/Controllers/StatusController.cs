@@ -38,7 +38,7 @@ namespace StudentProjectManagementSystem.Controllers
             var status = await _statusService.CreateStatusAsync(createStatusDto);
             return CreatedAtAction(
                 nameof(GetStatusById),
-                new { id = status.StatusId },
+                new { id = status.TaskStatusId },
                 status);
         }
 

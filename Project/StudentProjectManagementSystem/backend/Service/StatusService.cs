@@ -16,41 +16,41 @@ namespace StudentProjectManagementSystem.Service
         public async Task<IEnumerable<StatusResponseDto>> GetAllStatusesAsync()
         {
             var statuses = await _statusRepository.GetAllStatusesAsync();
+
             return statuses.Select(s => new StatusResponseDto
             {
-                StatusId = s.StatusId,
-                StatusName = s.StatusName,
-                Description = s.Description
+                TaskStatusId = s.TaskStatusId,
+                StatusName = s.StatusName
             });
         }
 
         public async Task<StatusResponseDto?> GetStatusByIdAsync(int id)
         {
             var status = await _statusRepository.GetStatusByIdAsync(id);
+
             if (status == null)
                 return null;
 
             return new StatusResponseDto
             {
-                StatusId = status.StatusId,
-                StatusName = status.StatusName,
-                Description = status.Description
+                TaskStatusId = status.TaskStatusId,
+                StatusName = status.StatusName
             };
         }
 
         public async Task<StatusResponseDto> CreateStatusAsync(CreateStatusDto createStatusDto)
         {
-            var status = new Status
+            var status = new ProjectTaskStatus
             {
-                StatusName = createStatusDto.StatusName,
-                Description = createStatusDto.Description
+                StatusName = createStatusDto.StatusName
             };
+
             await _statusRepository.CreateStatusAsync(status);
+
             return new StatusResponseDto
             {
-                StatusId = status.StatusId,
-                StatusName = status.StatusName,
-                Description = status.Description
+                TaskStatusId = status.TaskStatusId,
+                StatusName = status.StatusName
             };
         }
 
@@ -62,22 +62,18 @@ namespace StudentProjectManagementSystem.Service
                 return null;
 
             status.StatusName = updateStatusDto.StatusName;
-            status.Description = updateStatusDto.Description;
+
             await _statusRepository.UpdateStatusAsync(status);
+
             return new StatusResponseDto
             {
-                StatusId = status.StatusId,
-                StatusName = status.StatusName,
-                Description = status.Description
+                TaskStatusId = status.TaskStatusId,
+                StatusName = status.StatusName
             };
         }
 
         public async Task<bool> DeleteStatusAsync(int id)
         {
-            var status = await _statusRepository.GetStatusByIdAsync(id);
-            if (status == null)
-                return false;
-
             return await _statusRepository.DeleteStatusAsync(id);
         }
     }

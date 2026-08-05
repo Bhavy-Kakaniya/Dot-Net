@@ -17,32 +17,17 @@ namespace StudentProjectManagementSystem.Service
 
         public async Task<ProjectResponseDto> CreateProjectAsync(CreateProjectDto createProjectDto)
         {
-            if (!await _userRepository.UserExistsAsync(createProjectDto.CreatedByUserId))
-            {
-                throw new InvalidOperationException("Created By User does not exist");
-            }
-
             var project = new Project
             {
-                Title = createProjectDto.Title,
-                Description = createProjectDto.Description,
-                Technology = createProjectDto.Technology,
-                StartDate = createProjectDto.StartDate,
-                EndDate = createProjectDto.EndDate,
-                CreatedByUserId = createProjectDto.CreatedByUserId
+                ProjectTitle = createProjectDto.ProjectTitle,
+                StatusName = createProjectDto.StatusName
             };
-
             await _projectRepository.CreateProjectAsync(project);
-
             return new ProjectResponseDto
             {
-                CreatedByUserId = project.CreatedByUserId,
-                Description = project.Description,
-                EndDate = project.EndDate,
                 ProjectId = project.ProjectId,
-                StartDate = project.StartDate,
-                Technology = project.Technology,
-                Title = project.Title
+                ProjectTitle = project.ProjectTitle,
+                StatusName = project.StatusName
             };
         }
 
@@ -61,36 +46,26 @@ namespace StudentProjectManagementSystem.Service
         public async Task<IEnumerable<ProjectResponseDto>> GetAllProjectsAsync()
         {
             var projects = await _projectRepository.GetAllProjectsAsync();
-
             return projects.Select(p => new ProjectResponseDto
             {
-                CreatedByUserId = p.CreatedByUserId,
-                Description = p.Description,
-                EndDate = p.EndDate,
                 ProjectId = p.ProjectId,
-                StartDate = p.StartDate,
-                Technology = p.Technology,
-                Title = p.Title
+                ProjectTitle = p.ProjectTitle,
+                StatusName = p.StatusName
             });
         }
 
         public async Task<ProjectResponseDto?> GetProjectByIdAsync(int id)
         {
             var project = await _projectRepository.GetProjectByIdAsync(id);
+
             if (project == null)
-            {
                 return null;
-            }
 
             return new ProjectResponseDto
             {
-                CreatedByUserId = project.CreatedByUserId,
-                Description = project.Description,
-                EndDate = project.EndDate,
-                StartDate = project.StartDate,
                 ProjectId = project.ProjectId,
-                Technology = project.Technology,
-                Title = project.Title
+                ProjectTitle = project.ProjectTitle,
+                StatusName = project.StatusName
             };
         }
 
@@ -99,27 +74,13 @@ namespace StudentProjectManagementSystem.Service
             var project = await _projectRepository.GetProjectByIdAsync(id);
             if (project == null)
                 return null;
-
-            if (!await _userRepository.UserExistsAsync(updateProjectDto.CreatedByUserId))
-                throw new InvalidOperationException("Created By User does not exist");
-
-            project!.Title = updateProjectDto.Title;
-            project.Description = updateProjectDto.Description;
-            project.Technology = updateProjectDto.Technology;
-            project.StartDate = updateProjectDto.StartDate;
-            project.EndDate = updateProjectDto.EndDate;
-            project.CreatedByUserId = updateProjectDto.CreatedByUserId;
-
+            project.ProjectTitle = updateProjectDto.ProjectTitle;
             await _projectRepository.UpdateProjectAsync(project);
             return new ProjectResponseDto
             {
                 ProjectId = project.ProjectId,
-                Title = project.Title,
-                Description = project.Description,
-                Technology = project.Technology,
-                StartDate = project.StartDate,
-                EndDate = project.EndDate,
-                CreatedByUserId = project.CreatedByUserId
+                ProjectTitle = project.ProjectTitle,
+                StatusName = project.StatusName
             };
         }
     }

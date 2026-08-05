@@ -10,6 +10,6 @@ namespace StudentProjectManagementSystem.DTOs.Project
 
         [Required]
         [StringLength(1000)]
-        public string Description { get; set; } = string.Empty;
+        public string StatusName { get; set; } = string.Empty;
     }
 }

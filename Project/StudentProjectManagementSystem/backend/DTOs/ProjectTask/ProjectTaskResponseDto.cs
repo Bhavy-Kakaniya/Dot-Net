@@ -22,6 +22,6 @@ namespace StudentProjectManagementSystem.DTOs.ProjectTask
 
         public int TaskStatusId { get; set; }
 
-        public int TaskPriorityId { get; set; }
+        public int ProjectTaskPriorityId { get; set; }
     }
 }

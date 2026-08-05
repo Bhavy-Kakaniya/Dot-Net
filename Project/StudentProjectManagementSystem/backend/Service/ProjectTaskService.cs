@@ -9,119 +9,89 @@ namespace StudentProjectManagementSystem.Service
     public class ProjectTaskService : IProjectTaskService
     {
         private readonly IProjectTaskRepository _projectTaskRepository;
-        private readonly IProjectRepository _projectRepository;
         private readonly ApplicationDbContext _context;
 
         public ProjectTaskService(IProjectTaskRepository projectTaskRepository, IProjectRepository projectRepository, ApplicationDbContext context)
         {
             _projectTaskRepository = projectTaskRepository;
-            _projectRepository = projectRepository;
             _context = context;
         }
 
         public async Task<IEnumerable<ProjectTaskResponseDto>> GetAllProjectTasksAsync()
         {
-            var projectTasks = await _projectTaskRepository.GetAllProjectTasksAsync();
-            return projectTasks.Select(pt => new ProjectTaskResponseDto
-            {
-                ProjectTaskId = pt.ProjectTaskId,
-                ProjectId = pt.ProjectId,
-                Title = pt.Title,
-                Description = pt.Description,
-                DueDate = pt.DueDate,
-                StatusId = pt.StatusId,
-                PriorityId = pt.PriorityId
-            });
+            var tasks = await _projectTaskRepository.GetAllProjectTasksAsync();
+
+            return tasks.Select(MapToDto);
         }
 
         public async Task<ProjectTaskResponseDto?> GetProjectTaskByIdAsync(int id)
         {
-            var projectTask = await _projectTaskRepository.GetProjectTaskByIdAsync(id);
-            if (projectTask == null)
+            var task = await _projectTaskRepository.GetProjectTaskByIdAsync(id);
+
+            if (task == null)
                 return null;
 
-            return new ProjectTaskResponseDto
-            {
-                ProjectTaskId = projectTask.ProjectTaskId,
-                ProjectId = projectTask.ProjectId,
-                Title = projectTask.Title,
-                Description = projectTask.Description,
-                DueDate = projectTask.DueDate,
-                StatusId = projectTask.StatusId,
-                PriorityId = projectTask.PriorityId
-            };
+            return MapToDto(task);
         }
 
+        // here
         public async Task<ProjectTaskResponseDto> CreateProjectTaskAsync(CreateProjectTaskDto dto)
         {
-            if (await _projectRepository.GetProjectByIdAsync(dto.ProjectId) == null)
-                throw new InvalidOperationException("Project does not exist");
+            if (!await _context.ProjectAllocations.AnyAsync(x => x.ProjectAllocationId == dto.ProjectAllocationId))
+                throw new InvalidOperationException("Project Allocation does not exist");
 
-            if (!await _context.Statuses.AnyAsync(s => s.StatusId == dto.StatusId))
-                throw new InvalidOperationException("Status does not exist");
+            if (!await _context.Users.AnyAsync(x => x.UserId == dto.AssignedByFacultyId))
+                throw new InvalidOperationException("Faculty does not exist");
 
-            if (!await _context.Priorities.AnyAsync(p => p.PriorityId == dto.PriorityId))
-                throw new InvalidOperationException("Priority does not exist");
+            if (!await _context.Users.AnyAsync(x => x.UserId == dto.AssignedToStudentId))
+                throw new InvalidOperationException("Student does not exist");
+            
+            if (!await _context.TaskStatuses.AnyAsync(x => x.TaskStatusId == dto.ProjectTaskStatusId))
+                throw new InvalidOperationException("Task Status does not exist");
+            
+            if (!await _context.TaskPriorities.AnyAsync(x => x.ProjectTaskPriorityId == dto.ProjectTaskPriorityId))
+                throw new InvalidOperationException("Task Priority does not exist");
 
-            var projectTask = new ProjectTask
+            var task = new ProjectTask
             {
-                ProjectId = dto.ProjectId,
-                Title = dto.Title,
-                Description = dto.Description,
+                ProjectAllocationId = dto.ProjectAllocationId,
+                TaskTitle = dto.TaskTitle,
+                TaskDescription = dto.TaskDescription,
+                AssignedDate = dto.AssignedDate,
                 DueDate = dto.DueDate,
-                StatusId = dto.StatusId,
-                PriorityId = dto.PriorityId
+                SubmissionDate = dto.SubmissionDate,
+                AssignedByFacultyId = dto.AssignedByFacultyId,
+                AssignedToStudentId = dto.AssignedToStudentId,
+                TaskStatusId = dto.ProjectTaskStatusId,
+                ProjectTaskPriorityId = dto.ProjectTaskPriorityId
             };
 
-            await _projectTaskRepository.CreateProjectTaskAsync(projectTask);
+            await _projectTaskRepository.CreateProjectTaskAsync(task);
 
-            return new ProjectTaskResponseDto
-            {
-                ProjectTaskId = projectTask.ProjectTaskId,
-                ProjectId = projectTask.ProjectId,
-                Title = projectTask.Title,
-                Description = projectTask.Description,
-                DueDate = projectTask.DueDate,
-                StatusId = projectTask.StatusId,
-                PriorityId = projectTask.PriorityId
-            };
+            return MapToDto(task);
         }
-
+        // here
         public async Task<ProjectTaskResponseDto?> UpdateProjectTaskAsync(int id, UpdateProjectTaskDto dto)
         {
-            var projectTask = await _projectTaskRepository.GetProjectTaskByIdAsync(id);
+            var task = await _projectTaskRepository.GetProjectTaskByIdAsync(id);
 
-            if (projectTask == null)
+            if (task == null)
                 return null;
 
-            if (await _projectRepository.GetProjectByIdAsync(dto.ProjectId) == null)
-                throw new InvalidOperationException("Project does not exist");
+            task.ProjectAllocationId = dto.ProjectAllocationId;
+            task.TaskTitle = dto.TaskTitle;
+            task.TaskDescription = dto.TaskDescription;
+            task.AssignedDate = dto.AssignedDate;
+            task.DueDate = dto.DueDate;
+            task.SubmissionDate = dto.SubmissionDate;
+            task.AssignedByFacultyId = dto.AssignedByFacultyId;
+            task.AssignedToStudentId = dto.AssignedToStudentId;
+            task.TaskStatusId = dto.TaskStatusId;
+            task.ProjectTaskPriorityId = dto.ProjectTaskPriorityId;
 
-            if (!await _context.Statuses.AnyAsync(s => s.StatusId == dto.StatusId))
-                throw new InvalidOperationException("Status does not exist");
+            await _projectTaskRepository.UpdateProjectTaskAsync(task);
 
-            if (!await _context.Priorities.AnyAsync(p => p.PriorityId == dto.PriorityId))
-                throw new InvalidOperationException("Priority does not exist");
-
-            projectTask.ProjectId = dto.ProjectId;
-            projectTask.Title = dto.Title;
-            projectTask.Description = dto.Description;
-            projectTask.DueDate = dto.DueDate;
-            projectTask.StatusId = dto.StatusId;
-            projectTask.PriorityId = dto.PriorityId;
-
-            await _projectTaskRepository.UpdateProjectTaskAsync(projectTask);
-
-            return new ProjectTaskResponseDto
-            {
-                ProjectTaskId = projectTask.ProjectTaskId,
-                ProjectId = projectTask.ProjectId,
-                Title = projectTask.Title,
-                Description = projectTask.Description,
-                DueDate = projectTask.DueDate,
-                StatusId = projectTask.StatusId,
-                PriorityId = projectTask.PriorityId
-            };
+            return MapToDto(task);
         }
 
         public async Task<bool> DeleteProjectTaskAsync(int id)
@@ -131,6 +101,26 @@ namespace StudentProjectManagementSystem.Service
                 return false;
 
             return await _projectTaskRepository.DeleteProjectTaskAsync(id);
+        }
+
+
+
+        private static ProjectTaskResponseDto MapToDto(ProjectTask task)
+        {
+            return new ProjectTaskResponseDto
+            {
+                TaskId = task.TaskId,
+                ProjectAllocationId = task.ProjectAllocationId,
+                TaskTitle = task.TaskTitle,
+                TaskDescription = task.TaskDescription,
+                AssignedDate = task.AssignedDate,
+                DueDate = task.DueDate,
+                SubmissionDate = task.SubmissionDate,
+                AssignedByFacultyId = task.AssignedByFacultyId,
+                AssignedToStudentId = task.AssignedToStudentId,
+                TaskStatusId = task.TaskStatusId,
+                ProjectTaskPriorityId = task.ProjectTaskPriorityId
+            };
         }
     }
 }

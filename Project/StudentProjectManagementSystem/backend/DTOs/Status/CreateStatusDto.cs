@@ -4,11 +4,6 @@ namespace StudentProjectManagementSystem.DTOs.Status
 {
     public class CreateStatusDto
     {
-        [Required]
-        [StringLength(50)]
         public string StatusName { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string? Description { get; set; }
     }
 }

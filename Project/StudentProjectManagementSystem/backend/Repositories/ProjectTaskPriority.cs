@@ -17,19 +17,23 @@ namespace StudentProjectManagementSystem.Repositories
         public async Task<IEnumerable<ProjectTask>> GetAllProjectTasksAsync()
         {
             return await _context.ProjectTasks
-                .Include(pt => pt.Project)
-                .Include(pt => pt.Status)
-                .Include(pt => pt.Priority)
+                .Include(pt => pt.ProjectAllocation)
+                .Include(pt => pt.ProjectTaskStatus)
+                .Include(pt => pt.ProjectTaskPriority)
+                .Include(pt => pt.AssignedByFaculty)
+                .Include(pt => pt.AssignedToStudent)
                 .ToListAsync();
         }
 
         public async Task<ProjectTask?> GetProjectTaskByIdAsync(int id)
         {
             return await _context.ProjectTasks
-                .Include(pt => pt.Project)
-                .Include(pt => pt.Status)
-                .Include(pt => pt.Priority)
-                .FirstOrDefaultAsync(pt => pt.ProjectTaskId == id);
+                .Include(pt => pt.ProjectAllocation)
+                .Include(pt => pt.ProjectTaskStatus)
+                .Include(pt => pt.ProjectTaskPriority)
+                .Include(pt => pt.AssignedByFaculty)
+                .Include(pt => pt.AssignedToStudent)
+                .FirstOrDefaultAsync(pt => pt.TaskId == id);
         }
 
         public async Task<ProjectTask> CreateProjectTaskAsync(ProjectTask projectTask)
@@ -53,9 +57,7 @@ namespace StudentProjectManagementSystem.Repositories
             var projectTask = await _context.ProjectTasks.FindAsync(id);
 
             if (projectTask == null)
-            {
                 return false;
-            }
 
             _context.ProjectTasks.Remove(projectTask);
             await _context.SaveChangesAsync();
