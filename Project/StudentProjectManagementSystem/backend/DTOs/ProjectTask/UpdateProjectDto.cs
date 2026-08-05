@@ -5,23 +5,32 @@ namespace StudentProjectManagementSystem.DTOs.ProjectTask
     public class UpdateProjectTaskDto
     {
         [Required]
-        public int ProjectId { get; set; }
+        public int ProjectAllocationId { get; set; }
 
         [Required]
-        [StringLength(150)]
-        public string Title { get; set; } = string.Empty;
+        [StringLength(200)]
+        public string TaskTitle { get; set; } = string.Empty;
+
+        public string? TaskDescription { get; set; }
 
         [Required]
-        [StringLength(1000)]
-        public string Description { get; set; } = string.Empty;
+        public DateTime AssignedDate { get; set; }
 
         [Required]
         public DateTime DueDate { get; set; }
 
-        [Required]
-        public int StatusId { get; set; }
+        public DateTime? SubmissionDate { get; set; }
 
         [Required]
-        public int PriorityId { get; set; }
+        public int AssignedByFacultyId { get; set; }
+
+        [Required]
+        public int AssignedToStudentId { get; set; }
+
+        [Required]
+        public int TaskStatusId { get; set; }
+
+        [Required]
+        public int TaskPriorityId { get; set; }
     }
 }
