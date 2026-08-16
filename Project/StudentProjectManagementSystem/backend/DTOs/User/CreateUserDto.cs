@@ -1,5 +1,3 @@
-// only this data will be send to frontend when creating new user
-// POST /api/user
 using System.ComponentModel.DataAnnotations;
 
 namespace StudentProjectManagementSystem.DTOs.user
@@ -7,16 +5,29 @@ namespace StudentProjectManagementSystem.DTOs.user
     public class CreateUserDto
     {
         [Required]
-        [StringLength(100)]
+        public int UserTypeId { get; set; }
+
+        [Required]
+        [StringLength(150)]
         public string FullName { get; set; } = string.Empty;
+
+        [StringLength(100)]
+        public string? UserCode { get; set; }
 
         [Required]
         [EmailAddress]
-        [StringLength(100)]
+        [StringLength(150)]
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [StringLength(100, MinimumLength = 6)]
         public string Password { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(15)]
+        public string MobileNumber { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(500)]
+        public string ProfilePicturePath { get; set; } = string.Empty;
     }
 }

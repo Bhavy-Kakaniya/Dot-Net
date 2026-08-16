@@ -20,8 +20,6 @@ namespace StudentProjectManagementSystem.Repositories
                 .Include(pt => pt.ProjectAllocation)
                 .Include(pt => pt.ProjectTaskStatus)
                 .Include(pt => pt.ProjectTaskPriority)
-                .Include(pt => pt.AssignedByFaculty)
-                .Include(pt => pt.AssignedToStudent)
                 .ToListAsync();
         }
 
@@ -31,8 +29,6 @@ namespace StudentProjectManagementSystem.Repositories
                 .Include(pt => pt.ProjectAllocation)
                 .Include(pt => pt.ProjectTaskStatus)
                 .Include(pt => pt.ProjectTaskPriority)
-                .Include(pt => pt.AssignedByFaculty)
-                .Include(pt => pt.AssignedToStudent)
                 .FirstOrDefaultAsync(pt => pt.TaskId == id);
         }
 

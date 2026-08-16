@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StudentProjectManagementSystem.Data;
+using StudentProjectManagementSystem.DTOs.Common;
 using StudentProjectManagementSystem.DTOs.user;
 using StudentProjectManagementSystem.DTOs.User;
-using StudentProjectManagementSystem.Interfaces;
 using StudentProjectManagementSystem.Models;
-
-// Repository: Task<IEnumerable<User>>
-// Service: Task<IEnumerable<UserResponseDto>>
-// Controller: Task<ActionResult<IEnumerable<UserResponseDto>>>
 
 namespace StudentProjectManagementSystem.Controllers
 {
@@ -14,72 +12,231 @@ namespace StudentProjectManagementSystem.Controllers
     [Route("api/[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly ApplicationDbContext _context;
 
-        public UserController(IUserService userService)
+        public UserController(ApplicationDbContext context)
         {
-            _userService = userService;
+            _context = context;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllUsers()
+        public async Task<ActionResult<ApiResponse<IEnumerable<UserResponseDto>>>> GetAllUsers()
         {
-            // ActionResult allows to return different http response like ok notfound
-            // IEnumerable is used for iterating over the user response dto which is data transfer object
-            var users = await _userService.GetAllUsersAsync();
-            return Ok(users);
+            var users = await _context.Users
+                .Select(u => new UserResponseDto
+                {
+                    UserId = u.UserId,
+                    UserTypeId = u.UserTypeId,
+                    FullName = u.FullName,
+                    UserCode = u.UserCode,
+                    Email = u.Email,
+                    MobileNumber = u.MobileNumber,
+                    ProfilePicturePath = u.ProfilePicturePath,
+                    IsActive = u.IsActive,
+                    IsDeleted = u.IsDeleted
+                })
+                .ToListAsync();
+
+            return Ok(
+                ApiResponse<IEnumerable<UserResponseDto>>.SuccessResponse(
+                    "Users retrieved successfully",
+                    users
+                )
+            );
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserResponseDto>> GetUserById(int id)
+        public async Task<ActionResult<ApiResponse<UserResponseDto>>> GetUserById(int id)
         {
-            var user = await _userService.GetUserByIdAsync(id);
+            var user = await _context.Users
+                .Where(u => u.UserId == id)
+                .Select(u => new UserResponseDto
+                {
+                    UserId = u.UserId,
+                    UserTypeId = u.UserTypeId,
+                    FullName = u.FullName,
+                    UserCode = u.UserCode,
+                    Email = u.Email,
+                    MobileNumber = u.MobileNumber,
+                    ProfilePicturePath = u.ProfilePicturePath,
+                    IsActive = u.IsActive,
+                    IsDeleted = u.IsDeleted
+                })
+                .FirstOrDefaultAsync();
+
             if (user == null)
             {
-                return NotFound(new { Message = $"user with {id} not found" });
+                return NotFound(
+                    ApiResponse<UserResponseDto>.ErrorResponse(
+                        $"User with {id} not found"
+                    )
+                );
             }
-            return Ok(user);
+
+            return Ok(
+                ApiResponse<UserResponseDto>.SuccessResponse(
+                    "User retrieved successfully",
+                    user
+                )
+            );
         }
 
         [HttpPost]
-        public async Task<ActionResult<UserResponseDto>> CreateUser(CreateUserDto createUserDto)
+        public async Task<ActionResult<ApiResponse<UserResponseDto>>> CreateUser(
+            CreateUserDto dto)
         {
-            try
+            if (!await _context.UserTypes
+                .AnyAsync(ut => ut.UserTypeId == dto.UserTypeId))
             {
-                var createdUser = await _userService.CreateUserAsync(createUserDto);
-
-                return CreatedAtAction(
-                    nameof(GetUserById),
-                    new { id = createdUser.UserId },
-                    createdUser
+                return BadRequest(
+                    ApiResponse<UserResponseDto>.ErrorResponse(
+                        "User Type does not exist"
+                    )
                 );
             }
-            catch (InvalidOperationException ex)
+
+            if (await _context.Users
+                .AnyAsync(u => u.Email == dto.Email))
             {
-                return Conflict(new { message = ex.Message });
+                return Conflict(
+                    ApiResponse<UserResponseDto>.ErrorResponse(
+                        "Email already exists"
+                    )
+                );
             }
+
+            var user = new User
+            {
+                UserTypeId = dto.UserTypeId,
+                FullName = dto.FullName,
+                UserCode = dto.UserCode,
+                Email = dto.Email,
+                PasswordHash = dto.Password,
+                MobileNumber = dto.MobileNumber,
+                ProfilePicturePath = dto.ProfilePicturePath,
+                IsActive = true,
+                IsDeleted = false
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var response = new UserResponseDto
+            {
+                UserId = user.UserId,
+                UserTypeId = user.UserTypeId,
+                FullName = user.FullName,
+                UserCode = user.UserCode,
+                Email = user.Email,
+                MobileNumber = user.MobileNumber,
+                ProfilePicturePath = user.ProfilePicturePath,
+                IsActive = user.IsActive,
+                IsDeleted = user.IsDeleted
+            };
+
+            return CreatedAtAction(
+                nameof(GetUserById),
+                new { id = user.UserId },
+                ApiResponse<UserResponseDto>.SuccessResponse(
+                    "User created successfully",
+                    response
+                )
+            );
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
+        public async Task<ActionResult<ApiResponse<UserResponseDto>>> UpdateUser(
+            int id,
+            UpdateUserDto dto)
         {
-            var updated = await _userService.UpdateUserAsync(id, updateUserDto);
-            if (!updated)
+            var user = await _context.Users.FindAsync(id);
+
+            if (user == null)
             {
-                return NotFound(new { message = $"user with {id} not found" });
+                return NotFound(
+                    ApiResponse<UserResponseDto>.ErrorResponse(
+                        $"User with {id} not found"
+                    )
+                );
             }
-            return NoContent();
+
+            if (!await _context.UserTypes
+                .AnyAsync(ut => ut.UserTypeId == dto.UserTypeId))
+            {
+                return BadRequest(
+                    ApiResponse<UserResponseDto>.ErrorResponse(
+                        "User Type does not exist"
+                    )
+                );
+            }
+
+            if (await _context.Users
+                .AnyAsync(u => u.Email == dto.Email && u.UserId != id))
+            {
+                return Conflict(
+                    ApiResponse<UserResponseDto>.ErrorResponse(
+                        "Email already exists"
+                    )
+                );
+            }
+
+            user.UserTypeId = dto.UserTypeId;
+            user.FullName = dto.FullName;
+            user.UserCode = dto.UserCode;
+            user.Email = dto.Email;
+            user.MobileNumber = dto.MobileNumber;
+            user.ProfilePicturePath = dto.ProfilePicturePath;
+            user.IsActive = dto.IsActive;
+
+            await _context.SaveChangesAsync();
+
+            var response = new UserResponseDto
+            {
+                UserId = user.UserId,
+                UserTypeId = user.UserTypeId,
+                FullName = user.FullName,
+                UserCode = user.UserCode,
+                Email = user.Email,
+                MobileNumber = user.MobileNumber,
+                ProfilePicturePath = user.ProfilePicturePath,
+                IsActive = user.IsActive,
+                IsDeleted = user.IsDeleted
+            };
+
+            return Ok(
+                ApiResponse<UserResponseDto>.SuccessResponse(
+                    "User updated successfully",
+                    response
+                )
+            );
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<ActionResult<ApiResponse<object>>> DeleteUser(int id)
         {
-            var deleted = await _userService.DeleteUserAsync(id);
-            if (!deleted)
+            var user = await _context.Users.FindAsync(id);
+
+            if (user == null)
             {
-                return NotFound(new { message = $"user with {id} not found" });
+                return NotFound(
+                    ApiResponse<object>.ErrorResponse(
+                        $"User with {id} not found"
+                    )
+                );
             }
-            return NoContent();
+
+            // Soft delete
+            user.IsDeleted = true;
+            user.IsActive = false;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(
+                ApiResponse<object>.SuccessResponse(
+                    "User deleted successfully",
+                    null!
+                )
+            );
         }
     }
 }

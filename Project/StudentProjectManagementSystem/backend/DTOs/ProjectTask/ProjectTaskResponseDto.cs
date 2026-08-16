@@ -1,27 +1,36 @@
-namespace StudentProjectManagementSystem.DTOs.ProjectTask
+namespace StudentProjectManagementSystem.DTOs.ProjectTask;
+
+public class ProjectTaskResponseDto
 {
-    public class ProjectTaskResponseDto
-    {
-        public int TaskId { get; set; }
+    public int TaskId { get; set; }
 
-        public int ProjectAllocationId { get; set; }
+    public int ProjectAllocationId { get; set; }
 
-        public string TaskTitle { get; set; } = string.Empty;
+    public string TaskTitle { get; set; } = string.Empty;
 
-        public string? TaskDescription { get; set; }
+    public string? TaskDescription { get; set; }
 
-        public DateTime AssignedDate { get; set; }
+    public int TaskStatusId { get; set; }
 
-        public DateTime DueDate { get; set; }
+    public int TaskPriorityId { get; set; }
 
-        public DateTime? SubmissionDate { get; set; }
+    public decimal AssignedScore { get; set; }
 
-        public int AssignedByFacultyId { get; set; }
+    public decimal? EarnedScore { get; set; }
 
-        public int AssignedToStudentId { get; set; }
+    public decimal? ProgressPercentage { get; set; }
 
-        public int TaskStatusId { get; set; }
+    public DateTime TaskAssignedDate { get; set; }
 
-        public int ProjectTaskPriorityId { get; set; }
-    }
+    public DateTime? TaskStartDate { get; set; }
+
+    public DateTime? TaskDueDate { get; set; }
+
+    public DateTime? TaskCompletedDate { get; set; }
+
+    public DateTime? NextFollowUpDate { get; set; }
+
+    public string? FacultyRemarks { get; set; }
+
+    public string? StudentRemarks { get; set; }
 }

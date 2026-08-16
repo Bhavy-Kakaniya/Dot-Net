@@ -5,7 +5,7 @@ namespace StudentProjectManagementSystem.Models;
 public class UserRole
 {
     [Key]
-    public int UserRoleId { get; set; }
+    public int RolePermissionId { get; set; }
 
     [Required]
     public int UserId { get; set; }

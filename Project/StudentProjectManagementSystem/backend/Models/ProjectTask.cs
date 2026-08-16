@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+
 namespace StudentProjectManagementSystem.Models;
 
 public class ProjectTask
@@ -18,30 +19,36 @@ public class ProjectTask
     public string? TaskDescription { get; set; }
 
     [Required]
-    public DateTime AssignedDate { get; set; }
-
-    [Required]
-    public DateTime DueDate { get; set; }
-
-    public DateTime? SubmissionDate { get; set; }
-
-    [Required]
-    public int AssignedByFacultyId { get; set; }
-
-    public User? AssignedByFaculty { get; set; }
-
-    [Required]
-    public int AssignedToStudentId { get; set; }
-
-    public User? AssignedToStudent { get; set; }
-
-    [Required]
     public int TaskStatusId { get; set; }
 
     public ProjectTaskStatus? ProjectTaskStatus { get; set; }
 
     [Required]
-    public int ProjectTaskPriorityId { get; set; }
+    public int TaskPriorityId { get; set; }
 
     public ProjectTaskPriority? ProjectTaskPriority { get; set; }
+
+    [Required]
+    public decimal AssignedScore { get; set; }
+
+    public decimal? EarnedScore { get; set; }
+
+    public decimal? ProgressPercentage { get; set; }
+
+    [Required]
+    public DateTime TaskAssignedDate { get; set; }
+
+    public DateTime? TaskStartDate { get; set; }
+
+    public DateTime? TaskDueDate { get; set; }
+
+    public DateTime? TaskCompletedDate { get; set; }
+
+    public DateTime? NextFollowUpDate { get; set; }
+
+    [StringLength(500)]
+    public string? FacultyRemarks { get; set; }
+
+    [StringLength(500)]
+    public string? StudentRemarks { get; set; }
 }

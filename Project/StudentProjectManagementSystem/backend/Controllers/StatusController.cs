@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StudentProjectManagementSystem.Data;
+using StudentProjectManagementSystem.DTOs.Common;
 using StudentProjectManagementSystem.DTOs.Status;
-using StudentProjectManagementSystem.Interfaces;
+using StudentProjectManagementSystem.Models;
 
 namespace StudentProjectManagementSystem.Controllers
 {
@@ -8,58 +11,98 @@ namespace StudentProjectManagementSystem.Controllers
     [ApiController]
     public class StatusController : ControllerBase
     {
-        private readonly IStatusService _statusService;
+        private readonly ApplicationDbContext _context;
 
-        public StatusController(IStatusService statusService)
+        public StatusController(ApplicationDbContext context)
         {
-            _statusService = statusService;
+            _context = context;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<StatusResponseDto>>> GetAllStatuses()
+        public async Task<ActionResult<ApiResponse<IEnumerable<StatusResponseDto>>>> GetAllStatuses()
         {
-            var statuses = await _statusService.GetAllStatusesAsync();
-            return Ok(statuses);
+            var statuses = await _context.TaskStatuses
+                .Select(s => new StatusResponseDto
+                {
+                    TaskStatusId = s.TaskStatusId,
+                    StatusName = s.TaskStatusName
+                }).ToListAsync();
+
+            return Ok(ApiResponse<IEnumerable<StatusResponseDto>>.SuccessResponse("Statuses retrieved successfully", statuses));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<StatusResponseDto>> GetStatusById(int id)
+        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> GetStatusById(int id)
         {
-            var status = await _statusService.GetStatusByIdAsync(id);
-            if (status == null)
-                return NotFound();
+            var status = await _context.TaskStatuses
+                .Where(s => s.TaskStatusId == id).Select(s => new StatusResponseDto
+                {
+                    TaskStatusId = s.TaskStatusId,
+                    StatusName = s.TaskStatusName
+                }).FirstOrDefaultAsync();
 
-            return Ok(status);
+            if (status == null)
+            {
+                return NotFound(ApiResponse<StatusResponseDto>.ErrorResponse($"Status with ID {id} not found"));
+            }
+
+            return Ok(ApiResponse<StatusResponseDto>.SuccessResponse("Status retrieved successfully", status));
         }
 
         [HttpPost]
-        public async Task<ActionResult<StatusResponseDto>> CreateStatus(CreateStatusDto createStatusDto)
+        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> CreateStatus(CreateStatusDto dto)
         {
-            var status = await _statusService.CreateStatusAsync(createStatusDto);
-            return CreatedAtAction(
-                nameof(GetStatusById),
-                new { id = status.TaskStatusId },
-                status);
+            var status = new ProjectTaskStatus
+            {
+                TaskStatusName = dto.StatusName,
+                TaskStatusCssClass = ""
+            };
+
+            _context.TaskStatuses.Add(status);
+            await _context.SaveChangesAsync();
+
+            var response = new StatusResponseDto
+            {
+                TaskStatusId = status.TaskStatusId,
+                StatusName = status.TaskStatusName
+            };
+            return CreatedAtAction("GetStatusById", new { id = status.TaskStatusId }, ApiResponse<StatusResponseDto>.SuccessResponse("Status created successfully", response));
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<StatusResponseDto>> UpdateStatus(int id, UpdateStatusDto updateStatusDto)
+        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> UpdateStatus(int id, UpdateStatusDto dto)
         {
-            var status = await _statusService.UpdateStatusAsync(id, updateStatusDto);
+            var status = await _context.TaskStatuses.FindAsync(id);
             if (status == null)
-                return NotFound();
+            {
+                return NotFound(ApiResponse<StatusResponseDto>.ErrorResponse($"Status with ID {id} not found"));
+            }
 
-            return Ok(status);
+            status.TaskStatusName = dto.StatusName;
+            await _context.SaveChangesAsync();
+
+            var response = new StatusResponseDto
+            {
+                TaskStatusId = status.TaskStatusId,
+                StatusName = status.TaskStatusName
+            };
+
+            return Ok(ApiResponse<StatusResponseDto>.SuccessResponse("Status updated successfully", response));
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteStatus(int id)
+        public async Task<ActionResult<ApiResponse<object>>> DeleteStatus(int id)
         {
-            var deleted = await _statusService.DeleteStatusAsync(id);
-            if (!deleted)
-                return NotFound();
+            var status = await _context.TaskStatuses.FindAsync(id);
+            if (status == null)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse($"Status with ID {id} not found"));
+            }
 
-            return NoContent();
+            _context.TaskStatuses.Remove(status);
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse<object>.SuccessResponse("Status deleted successfully", null!));
         }
     }
 }

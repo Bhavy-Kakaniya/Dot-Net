@@ -1,15 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace StudentProjectManagementSystem.DTOs.Project
-{
-    public class UpdateProjectDto
-    {
-        [Required]
-        [StringLength(150)]
-        public string ProjectTitle { get; set; } = string.Empty;
+namespace StudentProjectManagementSystem.DTOs.Project;
 
-        [Required]
-        [StringLength(1000)]
-        public string StatusName { get; set; } = string.Empty;
-    }
+public class UpdateProjectDto
+{
+    [Required]
+    [StringLength(150)]
+    public string ProjectTitle { get; set; } = string.Empty;
 }

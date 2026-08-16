@@ -8,12 +8,10 @@ public class Project
     public int ProjectId { get; set; }
 
     [Required]
-    [StringLength(150)]
+    [StringLength(200)]
     public string ProjectTitle { get; set; } = string.Empty;
 
-    [Required]
-    [StringLength(1000)]
-    public string StatusName { get; set; } = string.Empty;
+    public string? Description { get; set; }
 
     public ICollection<ProjectAllocation> ProjectAllocations { get; set; } = new List<ProjectAllocation>();
 }

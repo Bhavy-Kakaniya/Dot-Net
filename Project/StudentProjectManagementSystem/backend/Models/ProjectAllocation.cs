@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using StudentProjectManagementSystem.Models;
+
+namespace StudentProjectManagementSystem.Models;
 
 public class ProjectAllocation
 {
@@ -22,18 +23,24 @@ public class ProjectAllocation
     public User? Faculty { get; set; }
 
     [Required]
-    public DateTime StartDate { get; set; }
+    public DateTime AssignedDate { get; set; }
 
     [Required]
-    public DateTime EndDate { get; set; }
+    public DateTime ProjectStartDate { get; set; }
 
-    public int TotalTasks { get; set; }
+    [Required]
+    public DateTime ProjectEndDate { get; set; }
 
-    public int CompletedTasks { get; set; }
+    [Required]
+    public int TotalTasksGiven { get; set; }
 
-    public decimal Progress { get; set; }
+    [Required]
+    public int TotalCompletedTasks { get; set; }
 
-    [StringLength(10)]
+    [Required]
+    public decimal ProgressPercentage { get; set; }
+
+    [StringLength(1)]
     public string? OverallGrade { get; set; }
 
     public ICollection<ProjectTask> ProjectTasks { get; set; } = new List<ProjectTask>();

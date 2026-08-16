@@ -11,20 +11,13 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
-
     public DbSet<UserType> UserTypes { get; set; }
-
     public DbSet<Role> Roles { get; set; }
-
     public DbSet<UserRole> UserRoles { get; set; }
-
     public DbSet<Project> Projects { get; set; }
-
     public DbSet<ProjectAllocation> ProjectAllocations { get; set; }
-
     public DbSet<ProjectTask> ProjectTasks { get; set; }
     public DbSet<ProjectTaskStatus> TaskStatuses { get; set; }
-
     public DbSet<ProjectTaskPriority> TaskPriorities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -49,10 +42,6 @@ public class ApplicationDbContext : DbContext
             .WithMany(r => r.UserRoles)
             .HasForeignKey(ur => ur.RoleId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<UserRole>()
-            .HasIndex(ur => new { ur.UserId, ur.RoleId })
-            .IsUnique();
     }
 
     private static void ConfigureProjectAllocation(ModelBuilder modelBuilder)
@@ -93,19 +82,7 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<ProjectTask>()
             .HasOne(pt => pt.ProjectTaskPriority)
             .WithMany(tp => tp.ProjectTasks)
-            .HasForeignKey(pt => pt.ProjectTaskPriorityId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<ProjectTask>()
-            .HasOne(pt => pt.AssignedByFaculty)
-            .WithMany()
-            .HasForeignKey(pt => pt.AssignedByFacultyId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<ProjectTask>()
-            .HasOne(pt => pt.AssignedToStudent)
-            .WithMany()
-            .HasForeignKey(pt => pt.AssignedToStudentId)
+            .HasForeignKey(pt => pt.TaskPriorityId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

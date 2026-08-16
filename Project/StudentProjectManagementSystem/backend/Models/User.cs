@@ -13,26 +13,27 @@ public class User
     public UserType? UserType { get; set; }
 
     [Required]
-    [StringLength(100)]
+    [StringLength(150)]
     public string FullName { get; set; } = string.Empty;
 
-    [Required]
+    [StringLength(100)]
     public string? UserCode { get; set; }
 
     [Required]
     [EmailAddress]
-    [StringLength(100)]
+    [StringLength(150)]
     public string Email { get; set; } = string.Empty;
 
     [Required]
     public string PasswordHash { get; set; } = string.Empty;
 
-    [Phone]
+    [Required]
     [StringLength(15)]
-    public string? MobileNumber { get; set; } = string.Empty;
+    public string MobileNumber { get; set; } = string.Empty;
 
-    [StringLength(255)]
-    public string? ProfilePicturePath { get; set; } = string.Empty;
+    [Required]
+    [StringLength(500)]
+    public string ProfilePicturePath { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
 
@@ -43,7 +44,10 @@ public class User
     public ICollection<Project> Projects { get; set; } = new List<Project>();
 
     public ICollection<ProjectAllocation> StudentProjectAllocations { get; set; } = new List<ProjectAllocation>();
+
     public ICollection<ProjectAllocation> FacultyProjectAllocations { get; set; } = new List<ProjectAllocation>();
+
     public ICollection<ProjectTask> AssignedTasks { get; set; } = new List<ProjectTask>();
+
     public ICollection<ProjectTask> CreatedTasks { get; set; } = new List<ProjectTask>();
 }
