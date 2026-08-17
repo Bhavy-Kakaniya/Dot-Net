@@ -46,8 +46,8 @@ namespace StudentProjectManagementSystem.Controllers
             };
             return Ok(ApiResponse<RoleResponseDto>.SuccessResponse("Role retrieved successfully", response));
         }
-        [HttpPost]
 
+        [HttpPost]
         public async Task<ActionResult<ApiResponse<RoleResponseDto>>> CreateRole(CreateRoleDto createRoleDto)
         {
             var role = new Role
@@ -89,6 +89,7 @@ namespace StudentProjectManagementSystem.Controllers
             };
             return Ok(ApiResponse<RoleResponseDto>.SuccessResponse("Role updated successfully", response));
         }
+
         [HttpDelete("{id}")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteRole(int id)
         {

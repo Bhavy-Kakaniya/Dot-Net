@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using StudentProjectManagementSystem.Data;
 using StudentProjectManagementSystem.DTOs.Common;
 using StudentProjectManagementSystem.Models;
-
 namespace StudentProjectManagementSystem.Controllers;
 
 [Route("api/[controller]")]
@@ -44,22 +43,16 @@ public class ProjectTaskPriorityController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> Update(
-        int id,
-        ProjectTaskPriority priority)
+    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> Update(int id, ProjectTaskPriority priority)
     {
         var existing = await _context.TaskPriorities.FindAsync(id);
-
         if (existing == null)
         {
             return NotFound(ApiResponse<ProjectTaskPriority>.ErrorResponse($"Task priority with ID {id} not found"));
         }
-
         existing.TaskPriorityName = priority.TaskPriorityName;
         existing.TaskPriorityCssClass = priority.TaskPriorityCssClass;
-
         await _context.SaveChangesAsync();
-
         return Ok(ApiResponse<ProjectTaskPriority>.SuccessResponse("Task priority updated successfully", existing));
     }
 
@@ -67,7 +60,6 @@ public class ProjectTaskPriorityController : ControllerBase
     public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
     {
         var priority = await _context.TaskPriorities.FindAsync(id);
-
         if (priority == null)
         {
             return NotFound(ApiResponse<object>.ErrorResponse($"Task priority with ID {id} not found"));

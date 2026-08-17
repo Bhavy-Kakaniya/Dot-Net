@@ -22,7 +22,6 @@ public class ProjectAllocationController : ControllerBase
     public async Task<ActionResult<ApiResponse<IEnumerable<ProjectAllocationResponseDto>>>> GetAll()
     {
         var allocations = await _context.ProjectAllocations.ToListAsync();
-
         var response = allocations.Select(MapToDto);
         return Ok(ApiResponse<IEnumerable<ProjectAllocationResponseDto>>.SuccessResponse("Project allocations retrieved successfully", response));
     }
@@ -39,8 +38,7 @@ public class ProjectAllocationController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Create(
-        CreateProjectAllocationDto dto)
+    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Create(CreateProjectAllocationDto dto)
     {
         if (!await _context.Projects.AnyAsync(x => x.ProjectId == dto.ProjectId))
         {
@@ -71,23 +69,13 @@ public class ProjectAllocationController : ControllerBase
 
         _context.ProjectAllocations.Add(allocation);
         await _context.SaveChangesAsync();
-
         var response = MapToDto(allocation);
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = allocation.ProjectAllocationId },
-            ApiResponse<ProjectAllocationResponseDto>.SuccessResponse(
-                "Project allocation created successfully",
-                response
-            )
-        );
+        return CreatedAtAction("GetById",new { id = allocation.ProjectAllocationId },ApiResponse<ProjectAllocationResponseDto>.SuccessResponse("Project allocation created successfully",response));
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Update(
-        int id,
-        UpdateProjectAllocationDto dto)
+    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Update(int id, UpdateProjectAllocationDto dto)
     {
         var allocation = await _context.ProjectAllocations.FindAsync(id);
         if (allocation == null)
@@ -112,7 +100,6 @@ public class ProjectAllocationController : ControllerBase
         allocation.ProjectStartDate = dto.ProjectStartDate;
         allocation.ProjectEndDate = dto.ProjectEndDate;
         allocation.OverallGrade = dto.OverallGrade;
-
         await _context.SaveChangesAsync();
         return Ok(ApiResponse<ProjectAllocationResponseDto>.SuccessResponse("Project allocation updated successfully", MapToDto(allocation)));
     }
@@ -125,14 +112,12 @@ public class ProjectAllocationController : ControllerBase
         {
             return NotFound(ApiResponse<object>.ErrorResponse($"Project allocation with ID {id} not found"));
         }
-
         _context.ProjectAllocations.Remove(allocation);
         await _context.SaveChangesAsync();
         return Ok(ApiResponse<object>.SuccessResponse("Project allocation deleted successfully", null!));
     }
 
-    private static ProjectAllocationResponseDto MapToDto(
-        ProjectAllocation allocation)
+    private static ProjectAllocationResponseDto MapToDto(ProjectAllocation allocation)
     {
         return new ProjectAllocationResponseDto
         {
