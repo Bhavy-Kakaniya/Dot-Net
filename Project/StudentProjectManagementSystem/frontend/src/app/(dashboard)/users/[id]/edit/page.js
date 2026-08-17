@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -10,112 +10,239 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs from 'dayjs';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
+import Alert from '@mui/material/Alert';
 import PageHeader from '@/components/PageHeader/PageHeader';
 import FormContainer from '@/components/FormContainer/FormContainer';
 import Loader from '@/components/Loader/Loader';
-import { useData } from '@/hooks/useData';
 import { useSnackbar } from '@/hooks/useSnackbar';
-import { USER_TYPES, USER_STATUSES } from '@/utils/constants';
 import { validateEmail, validateRequired } from '@/utils/validation';
+import { userService, userTypeService } from '@/services/api';
 
-export default function EditUserPage() {
+export default function EditUserPage({ params }) {
   const router = useRouter();
-  const params = useParams();
-  const { getUserById, updateUser } = useData();
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
   const { showSnackbar } = useSnackbar();
-  const userId = parseInt(params.id, 10);
-  const existingUser = getUserById(userId);
 
-  const [form, setForm] = useState(null);
+  const [userTypes, setUserTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState(null);
+
+  const [form, setForm] = useState({
+    fullName: '',
+    userCode: '',
+    email: '',
+    mobileNumber: '',
+    userTypeId: '',
+    isActive: true,
+    profilePicturePath: '',
+  });
+
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (existingUser) {
-      setForm({
-        ...existingUser,
-        enrolledDate: dayjs(existingUser.enrolledDate),
-      });
-    }
-  }, [existingUser]);
+    async function loadData() {
+      setLoading(true);
+      setApiError(null);
+      try {
+        const [userData, types] = await Promise.all([
+          userService.getById(id),
+          userTypeService.getAll().catch(() => []),
+        ]);
 
-  if (!form) return <Loader message="Loading user..." />;
+        const seen = new Set();
+        const unique = (types || []).filter((ut) => {
+          if (seen.has(ut.userTypeName)) return false;
+          seen.add(ut.userTypeName);
+          return true;
+        });
+        setUserTypes(unique);
+        setForm({
+          fullName: userData.fullName || '',
+          userCode: userData.userCode || '',
+          email: userData.email || '',
+          mobileNumber: userData.mobileNumber || '',
+          userTypeId: userData.userTypeId || '',
+          isActive: userData.isActive ?? true,
+          profilePicturePath: userData.profilePicturePath || '',
+        });
+      } catch (err) {
+        console.error('Failed to load user:', err);
+        setApiError(err.message || 'Failed to load user details');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (id) {
+      loadData();
+    }
+  }, [id]);
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const validate = () => {
     const newErrors = {
-      name: validateRequired(form.name, 'Name'),
+      fullName: validateRequired(form.fullName, 'Full Name'),
+      userCode: validateRequired(form.userCode, 'User Code'),
       email: validateEmail(form.email),
-      department: validateRequired(form.department, 'Department'),
+      userTypeId: validateRequired(form.userTypeId, 'User Type'),
     };
     setErrors(newErrors);
-    if (Object.values(newErrors).some(Boolean)) return;
-
-    updateUser(userId, { ...form, enrolledDate: form.enrolledDate.format('YYYY-MM-DD') });
-    showSnackbar('User updated successfully');
-    router.push('/users');
+    return !Object.values(newErrors).some(Boolean);
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setApiError(null);
+    if (!validate()) return;
+
+    setSubmitting(true);
+    try {
+      await userService.update(id, {
+        fullName: form.fullName.trim(),
+        userCode: form.userCode.trim(),
+        email: form.email.trim(),
+        mobileNumber: (form.mobileNumber?.trim() || '555-0100').substring(0, 15),
+        userTypeId: Number(form.userTypeId),
+        isActive: Boolean(form.isActive),
+        profilePicturePath: form.profilePicturePath?.trim() || '/avatars/default.png',
+      });
+
+      showSnackbar('User updated successfully');
+      router.push('/users');
+    } catch (err) {
+      console.error('Update user error:', err);
+      setApiError(err.message || 'Failed to update user');
+      showSnackbar(err.message || 'Failed to update user', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <Loader message="Loading user details..." />;
+  }
 
   return (
     <Box>
       <PageHeader
-        title="Edit User"
+        title={`Edit User #${id}`}
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Users', href: '/users' },
-          { label: form.name, href: `/users/${userId}` },
-          { label: 'Edit', href: `/users/${userId}/edit` },
+          { label: form.fullName || `User #${id}`, href: `/users/${id}` },
+          { label: 'Edit', href: `/users/${id}/edit` },
         ]}
       />
 
-      <FormContainer>
+      <FormContainer maxWidth="md">
+        {apiError && (
+          <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => setApiError(null)}>
+            {apiError}
+          </Alert>
+        )}
+
         <Grid container spacing={2.5} component="form" onSubmit={handleSubmit}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth label="Full Name" value={form.name} onChange={handleChange('name')} error={!!errors.name} helperText={errors.name} required />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth label="Email" value={form.email} onChange={handleChange('email')} error={!!errors.email} helperText={errors.email} required />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth label="Phone" value={form.phone} onChange={handleChange('phone')} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField fullWidth label="Department" value={form.department} onChange={handleChange('department')} error={!!errors.department} helperText={errors.department} required />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Type</InputLabel>
-              <Select value={form.type} label="Type" onChange={handleChange('type')}>
-                {USER_TYPES.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select value={form.status} label="Status" onChange={handleChange('status')}>
-                {USER_STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <DatePicker
-              label="Enrolled Date"
-              value={form.enrolledDate}
-              onChange={(val) => setForm((prev) => ({ ...prev, enrolledDate: val }))}
-              slotProps={{ textField: { fullWidth: true } }}
+            <TextField
+              fullWidth
+              label="Full Name"
+              value={form.fullName}
+              onChange={handleChange('fullName')}
+              error={!!errors.fullName}
+              helperText={errors.fullName}
+              required
             />
           </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="User Code (Roll No / Employee ID)"
+              value={form.userCode}
+              onChange={handleChange('userCode')}
+              error={!!errors.userCode}
+              helperText={errors.userCode}
+              required
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Email Address"
+              type="email"
+              value={form.email}
+              onChange={handleChange('email')}
+              error={!!errors.email}
+              helperText={errors.email}
+              required
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormControl fullWidth error={!!errors.userTypeId} required>
+              <InputLabel>User Type</InputLabel>
+              <Select
+                value={form.userTypeId}
+                label="User Type"
+                onChange={handleChange('userTypeId')}
+              >
+                {userTypes.map((t, i) => (
+                  <MenuItem key={i} value={t.userTypeId}>
+                    {t.userTypeName}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Mobile Number"
+              value={form.mobileNumber}
+              onChange={handleChange('mobileNumber')}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={form.isActive}
+                  onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))}
+                  color="primary"
+                />
+              }
+              label={form.isActive ? 'Active User' : 'Inactive User'}
+              sx={{ mt: 1 }}
+            />
+          </Grid>
+
           <Grid size={12}>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button variant="outlined" onClick={() => router.push('/users')}>Cancel</Button>
-              <Button type="submit" variant="contained">Save Changes</Button>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => router.push('/users')}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={submitting}
+              >
+                {submitting ? 'Saving Changes...' : 'Save Changes'}
+              </Button>
             </Box>
           </Grid>
         </Grid>

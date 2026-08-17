@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata = {
   title: 'SPMS - Student Project Management System',
-  description: 'Admin dashboard for managing student projects, tasks, and users',
+  StatusName: 'Admin dashboard for managing student projects, tasks, and users',
 };
 
 export default function RootLayout({ children }) {

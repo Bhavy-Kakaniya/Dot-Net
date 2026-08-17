@@ -1,11 +1,12 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import initialUsers from '@/data/users';
 import initialRoles from '@/data/roles';
 import initialUserRoles from '@/data/userRoles';
 import initialProjects from '@/data/projects';
 import initialTasks from '@/data/tasks';
+import { userService, roleService, userRoleService, projectService, projectTaskService, projectAllocationService } from '@/services/api';
 
 const DataContext = createContext(null);
 
@@ -15,8 +16,88 @@ export function DataProvider({ children }) {
   const [userRoles, setUserRoles] = useState(initialUserRoles);
   const [projects, setProjects] = useState(initialProjects);
   const [tasks, setTasks] = useState(initialTasks);
+  const [allocations, setAllocations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const getNextId = (items) => Math.max(0, ...items.map((i) => i.id)) + 1;
+  const refreshData = useCallback(async () => {
+    try {
+      const [uData, rData, urData, pData, tData, aData] = await Promise.all([
+        userService.getAll().catch(() => null),
+        roleService.getAll().catch(() => null),
+        userRoleService.getAll().catch(() => null),
+        projectService.getAll().catch(() => null),
+        projectTaskService.getAll().catch(() => null),
+        projectAllocationService.getAll().catch(() => null),
+      ]);
+
+      if (uData && Array.isArray(uData)) {
+        setUsers(
+          uData.map((u) => ({
+            ...u,
+            id: u.userId,
+            name: u.fullName,
+            phone: u.mobileNumber,
+            status: u.isActive ? 'Active' : 'Inactive',
+          }))
+        );
+      }
+
+      if (rData && Array.isArray(rData)) {
+        setRoles(
+          rData.map((r) => ({
+            ...r,
+            id: r.roleId,
+            name: r.roleName,
+            permissions: [],
+          }))
+        );
+      }
+
+      if (urData && Array.isArray(urData)) {
+        setUserRoles(
+          urData.map((ur) => ({
+            ...ur,
+            id: ur.rolePermissionId,
+          }))
+        );
+      }
+
+      if (pData && Array.isArray(pData)) {
+        setProjects(
+          pData.map((p) => ({
+            ...p,
+            id: p.projectId,
+            title: p.projectTitle,
+          }))
+        );
+      }
+
+      if (tData && Array.isArray(tData)) {
+        setTasks(
+          tData.map((t) => ({
+            ...t,
+            id: t.taskId,
+            title: t.taskTitle,
+            description: t.taskDescription,
+          }))
+        );
+      }
+
+      if (aData && Array.isArray(aData)) {
+        setAllocations(aData);
+      }
+    } catch (err) {
+      console.warn('Initial DataProvider sync from backend API:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  const getNextId = (items) => Math.max(0, ...items.map((i) => i.id || 0)) + 1;
 
   const addUser = useCallback((user) => {
     const newUser = { ...user, id: getNextId(users) };
@@ -25,11 +106,11 @@ export function DataProvider({ children }) {
   }, [users]);
 
   const updateUser = useCallback((id, updates) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
+    setUsers((prev) => prev.map((u) => (u.id === id || u.userId === id ? { ...u, ...updates } : u)));
   }, []);
 
   const deleteUser = useCallback((id) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+    setUsers((prev) => prev.filter((u) => u.id !== id && u.userId !== id));
   }, []);
 
   const addRole = useCallback((role) => {
@@ -39,11 +120,11 @@ export function DataProvider({ children }) {
   }, [roles]);
 
   const updateRole = useCallback((id, updates) => {
-    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, ...updates } : r)));
+    setRoles((prev) => prev.map((r) => (r.id === id || r.roleId === id ? { ...r, ...updates } : r)));
   }, []);
 
   const deleteRole = useCallback((id) => {
-    setRoles((prev) => prev.filter((r) => r.id !== id));
+    setRoles((prev) => prev.filter((r) => r.id !== id && r.roleId !== id));
   }, []);
 
   const assignRole = useCallback((assignment) => {
@@ -53,7 +134,7 @@ export function DataProvider({ children }) {
   }, [userRoles]);
 
   const removeRoleAssignment = useCallback((id) => {
-    setUserRoles((prev) => prev.filter((ur) => ur.id !== id));
+    setUserRoles((prev) => prev.filter((ur) => ur.id !== id && ur.rolePermissionId !== id));
   }, []);
 
   const addProject = useCallback((project) => {
@@ -63,11 +144,11 @@ export function DataProvider({ children }) {
   }, [projects]);
 
   const updateProject = useCallback((id, updates) => {
-    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+    setProjects((prev) => prev.map((p) => (p.id === id || p.projectId === id ? { ...p, ...updates } : p)));
   }, []);
 
   const deleteProject = useCallback((id) => {
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+    setProjects((prev) => prev.filter((p) => p.id !== id && p.projectId !== id));
   }, []);
 
   const addTask = useCallback((task) => {
@@ -77,17 +158,17 @@ export function DataProvider({ children }) {
   }, [tasks]);
 
   const updateTask = useCallback((id, updates) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+    setTasks((prev) => prev.map((t) => (t.id === id || t.taskId === id ? { ...t, ...updates } : t)));
   }, []);
 
   const deleteTask = useCallback((id) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    setTasks((prev) => prev.filter((t) => t.id !== id && t.taskId !== id));
   }, []);
 
-  const getUserById = useCallback((id) => users.find((u) => u.id === id), [users]);
-  const getRoleById = useCallback((id) => roles.find((r) => r.id === id), [roles]);
-  const getProjectById = useCallback((id) => projects.find((p) => p.id === id), [projects]);
-  const getTaskById = useCallback((id) => tasks.find((t) => t.id === id), [tasks]);
+  const getUserById = useCallback((id) => users.find((u) => u.id === id || u.userId === id), [users]);
+  const getRoleById = useCallback((id) => roles.find((r) => r.id === id || r.roleId === id), [roles]);
+  const getProjectById = useCallback((id) => projects.find((p) => p.id === id || p.projectId === id), [projects]);
+  const getTaskById = useCallback((id) => tasks.find((t) => t.id === id || t.taskId === id), [tasks]);
 
   return (
     <DataContext.Provider
@@ -97,6 +178,9 @@ export function DataProvider({ children }) {
         userRoles,
         projects,
         tasks,
+        allocations,
+        loading,
+        refreshData,
         addUser,
         updateUser,
         deleteUser,

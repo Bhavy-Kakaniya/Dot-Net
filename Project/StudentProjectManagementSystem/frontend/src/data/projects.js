@@ -2,7 +2,7 @@ const projects = [
   {
     id: 1,
     title: 'Smart Campus Navigation App',
-    description: 'Mobile application for indoor/outdoor campus navigation using BLE beacons and GPS.',
+    StatusName: 'Mobile application for indoor/outdoor campus navigation using BLE beacons and GPS.',
     status: 'In Progress',
     progress: 65,
     startDate: '2025-01-15',
@@ -15,7 +15,7 @@ const projects = [
   {
     id: 2,
     title: 'IoT-Based Energy Monitoring',
-    description: 'Real-time energy consumption monitoring system for university buildings.',
+    StatusName: 'Real-time energy consumption monitoring system for university buildings.',
     status: 'Planning',
     progress: 20,
     startDate: '2025-03-01',
@@ -28,7 +28,7 @@ const projects = [
   {
     id: 3,
     title: 'AI-Powered Study Assistant',
-    description: 'Chatbot that helps students with course materials and scheduling.',
+    StatusName: 'Chatbot that helps students with course materials and scheduling.',
     status: 'In Progress',
     progress: 45,
     startDate: '2024-11-01',
@@ -41,7 +41,7 @@ const projects = [
   {
     id: 4,
     title: 'Automated Library Management',
-    description: 'RFID-based library book tracking and recommendation system.',
+    StatusName: 'RFID-based library book tracking and recommendation system.',
     status: 'Completed',
     progress: 100,
     startDate: '2024-06-01',
@@ -54,7 +54,7 @@ const projects = [
   {
     id: 5,
     title: 'Robotic Arm Controller',
-    description: 'Web-based interface for controlling a 6-DOF robotic arm.',
+    StatusName: 'Web-based interface for controlling a 6-DOF robotic arm.',
     status: 'On Hold',
     progress: 30,
     startDate: '2025-02-01',
@@ -67,7 +67,7 @@ const projects = [
   {
     id: 6,
     title: 'Blockchain Certificate Verification',
-    description: 'Decentralized system for verifying academic certificates.',
+    StatusName: 'Decentralized system for verifying academic certificates.',
     status: 'In Progress',
     progress: 55,
     startDate: '2025-01-01',

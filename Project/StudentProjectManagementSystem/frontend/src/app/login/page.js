@@ -32,7 +32,7 @@ export default function LoginPage() {
 
   if (isAuthenticated) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {
       email: validateEmail(email),
@@ -44,15 +44,18 @@ export default function LoginPage() {
     if (Object.values(newErrors).some(Boolean)) return;
 
     setLoading(true);
-    setTimeout(() => {
-      const result = login(email, password);
+    try {
+      const result = await login(email, password);
       if (result.success) {
         router.push('/dashboard');
       } else {
-        setSubmitError(result.error);
+        setSubmitError(result.error || 'Invalid credentials');
       }
+    } catch {
+      setSubmitError('Failed to sign in');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (

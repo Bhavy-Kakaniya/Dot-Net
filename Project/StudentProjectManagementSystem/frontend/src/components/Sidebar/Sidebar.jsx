@@ -17,6 +17,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 import TaskIcon from '@mui/icons-material/Task';
 import PersonIcon from '@mui/icons-material/Person';
 import SchoolIcon from '@mui/icons-material/School';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import { usePathname, useRouter } from 'next/navigation';
 import { SIDEBAR_WIDTH, APP_NAME } from '@/utils/constants';
 
@@ -26,6 +27,7 @@ const menuItems = [
   { title: 'Roles', path: '/roles', icon: SecurityIcon },
   { title: 'User Roles', path: '/user-roles', icon: AssignmentIndIcon },
   { title: 'Projects', path: '/projects', icon: FolderIcon },
+  { title: 'Allocations', path: '/allocations', icon: AssignmentTurnedInIcon },
   { title: 'Tasks', path: '/tasks', icon: TaskIcon },
   { title: 'Profile', path: '/profile', icon: PersonIcon },
 ];

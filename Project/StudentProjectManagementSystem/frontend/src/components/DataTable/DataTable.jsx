@@ -27,7 +27,7 @@ export default function DataTable({
   if (rows.length === 0 && totalCount === 0) {
     return (
       <Paper>
-        <EmptyState title={emptyTitle} description={emptyDescription} />
+        <EmptyState title={emptyTitle} StatusName={emptyDescription} />
       </Paper>
     );
   }

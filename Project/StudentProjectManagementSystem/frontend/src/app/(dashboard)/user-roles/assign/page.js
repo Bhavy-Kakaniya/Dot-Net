@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
@@ -13,43 +13,88 @@ import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import PageHeader from '@/components/PageHeader/PageHeader';
 import FormContainer from '@/components/FormContainer/FormContainer';
-import { useData } from '@/hooks/useData';
+import Loader from '@/components/Loader/Loader';
 import { useSnackbar } from '@/hooks/useSnackbar';
-import { useAuth } from '@/hooks/useAuth';
+import { validateRequired } from '@/utils/validation';
+import { userRoleService, userService, roleService } from '@/services/api';
 
 export default function AssignRolePage() {
   const router = useRouter();
-  const { users, roles, userRoles, assignRole } = useData();
   const { showSnackbar } = useSnackbar();
-  const { user } = useAuth();
+
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState(null);
+
   const [form, setForm] = useState({ userId: '', roleId: '' });
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (!form.userId || !form.roleId) {
-      setError('Please select both a user and a role');
-      return;
+  useEffect(() => {
+    async function loadData() {
+      setLoadingData(true);
+      setApiError(null);
+      try {
+        const [usersData, rolesData] = await Promise.all([
+          userService.getAll(),
+          roleService.getAll(),
+        ]);
+        setUsers((usersData || []).filter((u) => !u.isDeleted));
+        const seenRole = new Set();
+        const uniqueRoles = (rolesData || []).filter((r) => {
+          if (seenRole.has(r.roleName)) return false;
+          seenRole.add(r.roleName);
+          return true;
+        });
+        setRoles(uniqueRoles);
+      } catch (err) {
+        console.error('Failed to load users or roles:', err);
+        setApiError('Failed to load user and role options.');
+      } finally {
+        setLoadingData(false);
+      }
     }
+    loadData();
+  }, []);
 
-    const exists = userRoles.some(
-      (ur) => ur.userId === parseInt(form.userId, 10) && ur.roleId === parseInt(form.roleId, 10)
-    );
-    if (exists) {
-      setError('This role is already assigned to the selected user');
-      return;
-    }
-
-    assignRole({
-      userId: parseInt(form.userId, 10),
-      roleId: parseInt(form.roleId, 10),
-      assignedBy: user?.name || 'Admin',
-    });
-    showSnackbar('Role assigned successfully');
-    router.push('/user-roles');
+  const handleChange = (field) => (e) => {
+    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setApiError(null);
+
+    const newErrors = {
+      userId: validateRequired(form.userId, 'User'),
+      roleId: validateRequired(form.roleId, 'Role'),
+    };
+    setErrors(newErrors);
+    if (Object.values(newErrors).some(Boolean)) return;
+
+    setSubmitting(true);
+    try {
+      await userRoleService.create({
+        userId: Number(form.userId),
+        roleId: Number(form.roleId),
+      });
+
+      showSnackbar('Role assigned successfully');
+      router.push('/user-roles');
+    } catch (err) {
+      console.error('Assign role error:', err);
+      setApiError(err.message || 'Failed to assign role');
+      showSnackbar(err.message || 'Failed to assign role', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loadingData) {
+    return <Loader message="Loading users and roles..." />;
+  }
 
   return (
     <Box>
@@ -62,44 +107,80 @@ export default function AssignRolePage() {
         ]}
       />
 
-      <FormContainer maxWidth={600}>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <FormContainer maxWidth="sm">
+        {apiError && (
+          <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => setApiError(null)}>
+            {apiError}
+          </Alert>
+        )}
+
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Select a user and role to create a new assignment.
+          Select a user and a role to create a new role assignment in the system.
         </Typography>
+
         <Grid container spacing={2.5} component="form" onSubmit={handleSubmit}>
           <Grid size={12}>
-            <FormControl fullWidth required>
-              <InputLabel>User</InputLabel>
+            <FormControl fullWidth error={!!errors.userId} required>
+              <InputLabel>Select User</InputLabel>
               <Select
                 value={form.userId}
-                label="User"
-                onChange={(e) => setForm({ ...form, userId: e.target.value })}
+                label="Select User"
+                onChange={handleChange('userId')}
               >
-                {users.map((u) => (
-                  <MenuItem key={u.id} value={u.id}>{u.name} ({u.email})</MenuItem>
-                ))}
+                {users.length === 0 ? (
+                  <MenuItem disabled value="">
+                    No users available
+                  </MenuItem>
+                ) : (
+                  users.map((u, i) => (
+                    <MenuItem key={i} value={u.userId}>
+                      {u.fullName} {u.userCode ? `(${u.userCode})` : ''} - {u.email}
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
           </Grid>
+
           <Grid size={12}>
-            <FormControl fullWidth required>
-              <InputLabel>Role</InputLabel>
+            <FormControl fullWidth error={!!errors.roleId} required>
+              <InputLabel>Select Role</InputLabel>
               <Select
                 value={form.roleId}
-                label="Role"
-                onChange={(e) => setForm({ ...form, roleId: e.target.value })}
+                label="Select Role"
+                onChange={handleChange('roleId')}
               >
-                {roles.map((r) => (
-                  <MenuItem key={r.id} value={r.id}>{r.name}</MenuItem>
-                ))}
+                {roles.length === 0 ? (
+                  <MenuItem disabled value="">
+                    No roles available
+                  </MenuItem>
+                ) : (
+                  roles.map((r, i) => (
+                    <MenuItem key={i} value={r.roleId}>
+                      {r.roleName}
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
           </Grid>
+
           <Grid size={12}>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button variant="outlined" onClick={() => router.push('/user-roles')}>Cancel</Button>
-              <Button type="submit" variant="contained">Assign Role</Button>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => router.push('/user-roles')}
+                disabled={submitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={submitting}
+              >
+                {submitting ? 'Assigning...' : 'Assign Role'}
+              </Button>
             </Box>
           </Grid>
         </Grid>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -10,219 +11,471 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import Avatar from '@mui/material/Avatar';
+import Alert from '@mui/material/Alert';
+import Chip from '@mui/material/Chip';
 import PeopleIcon from '@mui/icons-material/People';
 import SchoolIcon from '@mui/icons-material/School';
 import PersonIcon from '@mui/icons-material/Person';
 import FolderIcon from '@mui/icons-material/Folder';
 import TaskIcon from '@mui/icons-material/Task';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, } from 'recharts';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader/PageHeader';
 import DashboardCard from '@/components/DashboardCard/DashboardCard';
-import DataTable from '@/components/DataTable/DataTable';
 import StatusChip from '@/components/StatusChip/StatusChip';
-import { useData } from '@/hooks/useData';
-import { formatDate, formatDateTime } from '@/utils/formatters';
-import activities from '@/data/activities';
+import Loader from '@/components/Loader/Loader';
+import { formatDate } from '@/utils/formatters';
+import { dashboardService } from '@/services/api';
 
-const CHART_COLORS = ['#1565C0', '#42A5F5', '#90CAF9', '#BBDEFB', '#E3F2FD'];
+const CHART_COLORS = ['#1565C0', '#42A5F5', '#90CAF9', '#BBDEFB', '#64B5F6', '#1E88E5'];
+const PRIORITY_COLORS = {
+  Low: '#4CAF50',
+  Medium: '#2196F3',
+  High: '#FF9800',
+  Critical: '#F44336',
+};
 
 export default function DashboardPage() {
-	const router = useRouter();
-	const { users, projects, tasks, getUserById } = useData();
+  const router = useRouter();
 
-	const totalUsers = users.length;
-	const students = users.filter((u) => u.type === 'Student').length;
-	const faculty = users.filter((u) => u.type === 'Faculty').length;
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-	const projectStatusData = [
-		{ name: 'Planning', value: projects.filter((p) => p.status === 'Planning').length },
-		{ name: 'In Progress', value: projects.filter((p) => p.status === 'In Progress').length },
-		{ name: 'On Hold', value: projects.filter((p) => p.status === 'On Hold').length },
-		{ name: 'Completed', value: projects.filter((p) => p.status === 'Completed').length },
-	].filter((d) => d.value > 0);
+  const [summary, setSummary] = useState({
+    totalStudents: 0,
+    totalFaculty: 0,
+    totalProjects: 0,
+    totalTasks: 0,
+    completedTasks: 0,
+    pendingTasks: 0,
+    averageProjectProgress: 0,
+  });
 
-	const taskStatusData = [
-		{ name: 'To Do', count: tasks.filter((t) => t.status === 'To Do').length },
-		{ name: 'In Progress', count: tasks.filter((t) => t.status === 'In Progress').length },
-		{ name: 'Review', count: tasks.filter((t) => t.status === 'Review').length },
-		{ name: 'Done', count: tasks.filter((t) => t.status === 'Done').length },
-		{ name: 'Blocked', count: tasks.filter((t) => t.status === 'Blocked').length },
-	];
+  const [tasksByStatus, setTasksByStatus] = useState([]);
+  const [tasksByPriority, setTasksByPriority] = useState([]);
+  const [topProjects, setTopProjects] = useState([]);
+  const [overdueTasks, setOverdueTasks] = useState([]);
+  const [topStudents, setTopStudents] = useState([]);
+  const [facultyWorkload, setFacultyWorkload] = useState([]);
+  const [tasksDueSoon, setTasksDueSoon] = useState([]);
 
-	const recentProjects = [...projects].sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 5);
+  useEffect(() => {
+    async function loadDashboardData() {
+      setLoading(true);
+      setError(null);
+      try {
+        const [
+          sumData,
+          statusData,
+          priorityData,
+          projectsData,
+          overdueData,
+          studentsData,
+          workloadData,
+          dueSoonData,
+        ] = await Promise.all([
+          dashboardService.getSummary().catch(() => ({})),
+          dashboardService.getTasksByStatus().catch(() => []),
+          dashboardService.getTasksByPriority().catch(() => []),
+          dashboardService.getTopProjectsByProgress().catch(() => []),
+          dashboardService.getOverdueTasks().catch(() => []),
+          dashboardService.getTopStudents().catch(() => []),
+          dashboardService.getFacultyWorkload().catch(() => []),
+          dashboardService.getTasksDueNext7Days().catch(() => []),
+        ]);
 
-	const upcomingTasks = [...tasks]
-		.filter((t) => t.status !== 'Done').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 5);
+        if (sumData) {
+          setSummary({
+            totalStudents: sumData.totalStudents ?? sumData.TotalStudents ?? 0,
+            totalFaculty: sumData.totalFaculty ?? sumData.TotalFaculty ?? 0,
+            totalProjects: sumData.totalProjects ?? sumData.TotalProjects ?? 0,
+            totalTasks: sumData.totalTasks ?? sumData.TotalTasks ?? 0,
+            completedTasks: sumData.completedTasks ?? sumData.CompletedTasks ?? 0,
+            pendingTasks: sumData.pendingTasks ?? sumData.PendingTasks ?? 0,
+            averageProjectProgress: sumData.averageProjectProgress ?? sumData.AverageProjectProgress ?? 0,
+          });
+        }
 
-	const projectColumns = [
-		{ id: 'title', label: 'Project', minWidth: 200 },
-		{
-			id: 'status',
-			label: 'Status',
-			render: (row) => <StatusChip status={row.status} />,
-		},
-		{
-			id: 'advisor',
-			label: 'Advisor',
-			render: (row) => getUserById(row.advisorId)?.name || '—',
-		},
-		{
-			id: 'progress', label: 'Progress', render: (row) => (
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120 }}>
-					<LinearProgress variant="determinate" value={row.progress} sx={{ flex: 1, height: 6, borderRadius: 3 }} />
-					<Typography variant="caption">{row.progress}%</Typography>
-				</Box>
-			),
-		},
-		{
-			id: 'endDate',
-			label: 'Due Date',
-			render: (row) => formatDate(row.endDate),
-		},
-	];
+        // Format task by status for recharts
+        const formattedStatus = (statusData || []).map((s) => ({
+          name: s.taskStatus || s.TaskStatus || 'Unknown',
+          count: s.totalTasks ?? s.TotalTasks ?? 0,
+        }));
+        setTasksByStatus(formattedStatus);
 
-	return (
-		<Box>
-			<PageHeader
-				title="Dashboard"
-				subtitle="Overview of your student project management system"
-				breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }]}
-			/>
+        // Format task by priority for recharts
+        const formattedPriority = (priorityData || []).map((p) => ({
+          name: p.priority || p.Priority || 'Unknown',
+          value: p.totalTasks ?? p.TotalTasks ?? 0,
+        }));
+        setTasksByPriority(formattedPriority);
 
-			<Grid container spacing={3} sx={{ mb: 3 }}>
-				<Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-					<DashboardCard title="Total Users" value={totalUsers} icon={PeopleIcon} color="primary.main" trend={{ positive: true, value: '12% this month' }} />
-				</Grid>
-				<Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-					<DashboardCard title="Students" value={students} icon={SchoolIcon} color="#2E7D32" />
-				</Grid>
-				<Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-					<DashboardCard title="Faculty" value={faculty} icon={PersonIcon} color="#7B1FA2" />
-				</Grid>
-				<Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-					<DashboardCard title="Projects" value={projects.length} icon={FolderIcon} color="#E65100" />
-				</Grid>
-				<Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }}>
-					<DashboardCard title="Tasks" value={tasks.length} icon={TaskIcon} color="#C62828" />
-				</Grid>
-			</Grid>
+        setTopProjects(projectsData || []);
+        setOverdueTasks(overdueData || []);
+        setTopStudents(studentsData || []);
+        setFacultyWorkload(workloadData || []);
+        setTasksDueSoon(dueSoonData || []);
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+        setError('Failed to connect to backend dashboard APIs. Please verify backend is running on port 5093.');
+      } finally {
+        setLoading(false);
+      }
+    }
 
-			<Grid container spacing={3} sx={{ mb: 3 }}>
-				<Grid size={{ xs: 12, md: 8 }}>
-					<Paper sx={{ p: 3 }}>
-						<Typography variant="h6" fontWeight={600} gutterBottom>
-							Task Status Overview
-						</Typography>
-						<Box sx={{ height: 300, mt: 2 }}>
-							<ResponsiveContainer width="100%" height="100%">
-								<BarChart data={taskStatusData}>
-									<CartesianGrid strokeDasharray="3 3" stroke="#E5E8EB" />
-									<XAxis dataKey="name" tick={{ fontSize: 12 }} />
-									<YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-									<Tooltip />
-									<Bar dataKey="count" fill="#1565C0" radius={[6, 6, 0, 0]} />
-								</BarChart>
-							</ResponsiveContainer>
-						</Box>
-					</Paper>
-				</Grid>
-				<Grid size={{ xs: 12, md: 4 }}>
-					<Paper sx={{ p: 3, height: '100%' }}>
-						<Typography variant="h6" fontWeight={600} gutterBottom>Project Status</Typography>
-						<Box sx={{ height: 300, mt: 1 }}>
-							<ResponsiveContainer width="100%" height="100%">
-								<PieChart>
-									<Pie data={projectStatusData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={4} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-										{projectStatusData.map((_, index) => (<Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />))}</Pie>
-									<Tooltip />
-									<Legend />
-								</PieChart>
-							</ResponsiveContainer>
-						</Box>
-					</Paper>
-				</Grid>
-			</Grid>
+    loadDashboardData();
+  }, []);
 
-			<Grid container spacing={3} sx={{ mb: 3 }}>
-				<Grid size={{ xs: 12, lg: 7 }}>
-					<Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Recent Projects</Typography>
-					<DataTable
-						columns={projectColumns} rows={recentProjects} page={0}
-						rowsPerPage={5} totalCount={recentProjects.length} onPageChange={() => { }}
-						onRowsPerPageChange={() => { }} onRowClick={(row) => router.push(`/projects/${row.id}`)}
-					/>
-				</Grid>
-				<Grid size={{ xs: 12, lg: 5 }}>
-					<Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Upcoming Tasks</Typography>
-					<Paper>
-						<List disablePadding>
-							{upcomingTasks.map((task, index) => (
-								<ListItem
-									key={task.id}
-									divider={index < upcomingTasks.length - 1}
-									sx={{ cursor: 'pointer' }}
-									onClick={() => router.push(`/tasks/${task.id}`)}
-								>
-									<ListItemAvatar>
-										<Avatar sx={{ bgcolor: 'primary.light', width: 36, height: 36 }}><TaskIcon fontSize="small" /></Avatar>
-									</ListItemAvatar>
-									<ListItemText
-										primary={task.title}
-										secondary={`Due: ${formatDate(task.dueDate)} • ${task.priority} priority`}
-										primaryTypographyProps={{ fontWeight: 500, fontSize: 14 }}
-									/>
-									<StatusChip status={task.status} />
-								</ListItem>
-							))}
-						</List>
-					</Paper>
-				</Grid>
-			</Grid>
+  if (loading) {
+    return <Loader message="Loading dashboard statistics from backend LINQ queries..." />;
+  }
 
-			<Grid container spacing={3}>
-				<Grid size={{ xs: 12, md: 6 }}>
-					<Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Recent Activities</Typography>
-					<Paper sx={{ p: 2 }}>
-						<List disablePadding>
-							{activities.slice(0, 6).map((activity, index) => (
-								<ListItem key={activity.id} divider={index < 5} sx={{ px: 1 }}>
-									<ListItemAvatar>
-										<Avatar sx={{ width: 32, height: 32, fontSize: 12, bgcolor: 'secondary.light' }}>{activity.user.charAt(0)}
-										</Avatar>
-									</ListItemAvatar>
-									<ListItemText
-										primary={
-											<Typography variant="body2">
-												<strong>{activity.user}</strong> {activity.action}{' '}
-												<strong>{activity.target}</strong>
-											</Typography>
-										}
-										secondary={formatDateTime(activity.timestamp)}
-									/>
-								</ListItem>
-							))}
-						</List>
-					</Paper>
-				</Grid>
-				<Grid size={{ xs: 12, md: 6 }}>
-					<Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>Project Progress</Typography>
-					<Paper sx={{ p: 3 }}>
-						{projects
-							.filter((p) => p.status === 'In Progress')
-							.slice(0, 5)
-							.map((project) => (
-								<Box key={project.id} sx={{ mb: 2.5 }}>
-									<Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-										<Typography variant="body2" fontWeight={500}>{project.title}</Typography>
-										<Typography variant="caption" color="text.secondary">{project.progress}%</Typography>
-									</Box>
-									<LinearProgress variant="determinate" value={project.progress} sx={{ height: 8, borderRadius: 4 }} />
-								</Box>
-							))}
-					</Paper>
-				</Grid>
-			</Grid>
-		</Box>
-	);
+  return (
+    <Box>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Live metrics & LINQ query analytics from ASP.NET Core backend"
+        breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }]}
+      />
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Top Statistic Cards */}
+      <Grid container spacing={2.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+          <DashboardCard
+            title="Students"
+            value={summary.totalStudents}
+            icon={SchoolIcon}
+            color="#2E7D32"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+          <DashboardCard
+            title="Faculty"
+            value={summary.totalFaculty}
+            icon={PersonIcon}
+            color="#7B1FA2"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+          <DashboardCard
+            title="Projects"
+            value={summary.totalProjects}
+            icon={FolderIcon}
+            color="#E65100"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+          <DashboardCard
+            title="Total Tasks"
+            value={summary.totalTasks}
+            icon={TaskIcon}
+            color="#1565C0"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+          <DashboardCard
+            title="Completed Tasks"
+            value={summary.completedTasks}
+            icon={CheckCircleIcon}
+            color="#2E7D32"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+          <DashboardCard
+            title="Avg Progress"
+            value={`${Number(summary.averageProjectProgress || 0).toFixed(0)}%`}
+            icon={TrendingUpIcon}
+            color="#00838F"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Overdue Tasks Alert Banner if any */}
+      {overdueTasks.length > 0 && (
+        <Alert
+          severity="warning"
+          icon={<WarningAmberIcon />}
+          sx={{ mb: 3 }}
+          action={
+            <Chip
+              label={`${overdueTasks.length} Overdue`}
+              color="warning"
+              size="small"
+              sx={{ fontWeight: 600 }}
+            />
+          }
+        >
+          <Typography variant="subtitle2" fontWeight={600}>
+            Attention: {overdueTasks.length} task(s) are currently past due date and require attention.
+          </Typography>
+        </Alert>
+      )}
+
+      {/* Charts Section */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Task Status Overview BarChart */}
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Paper sx={{ p: 3, height: '100%' }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Tasks by Status (Backend LINQ Query)
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Real-time distribution of tasks grouped by status
+            </Typography>
+            <Box sx={{ height: 280, mt: 2 }}>
+              {tasksByStatus.length === 0 ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <Typography variant="body2" color="text.secondary">No task status data available</Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={tasksByStatus}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E8EB" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#1565C0" radius={[6, 6, 0, 0]} name="Total Tasks" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Task Priority Distribution PieChart */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Paper sx={{ p: 3, height: '100%' }}>
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              Tasks by Priority
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Priority level breakdown
+            </Typography>
+            <Box sx={{ height: 280, mt: 1 }}>
+              {tasksByPriority.length === 0 ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                  <Typography variant="body2" color="text.secondary">No task priority data available</Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={tasksByPriority}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {tasksByPriority.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={PRIORITY_COLORS[entry.name] || CHART_COLORS[index % CHART_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Progress & Top Students Section */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Top Projects Progress */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight={600}>
+                Top Projects by Progress
+              </Typography>
+              <Chip label="LINQ Query" size="small" variant="outlined" />
+            </Box>
+            {topProjects.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                No project allocation progress data available.
+              </Typography>
+            ) : (
+              topProjects.slice(0, 5).map((p, idx) => {
+                const prog = Number(p.progressPercentage ?? p.ProgressPercentage ?? 0);
+                const projTitle = p.project || p.Project || `Project #${idx + 1}`;
+                const studentName = p.student || p.Student || '—';
+                const facultyName = p.faculty || p.Faculty || '—';
+                return (
+                  <Box key={idx} sx={{ mb: 2.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {projTitle}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Student: {studentName} | Faculty: {facultyName}
+                        </Typography>
+                      </Box>
+                      <Typography variant="subtitle2" fontWeight={700} color="primary.main">
+                        {prog.toFixed(0)}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={prog}
+                      sx={{ height: 8, borderRadius: 4 }}
+                    />
+                  </Box>
+                );
+              })
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Top Students by Earned Score */}
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+              <Typography variant="h6" fontWeight={600}>
+                Top Students (Avg Score)
+              </Typography>
+              <Chip label="Top 10" size="small" color="success" variant="outlined" />
+            </Box>
+            {topStudents.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
+                No student score records available.
+              </Typography>
+            ) : (
+              <List disablePadding>
+                {topStudents.slice(0, 5).map((s, idx) => {
+                  const studentName = s.studentName || s.StudentName || 'Unknown';
+                  const avgScore = Number(s.averageScore ?? s.AverageScore ?? 0).toFixed(1);
+                  return (
+                    <ListItem key={idx} divider={idx < 4} sx={{ px: 0, py: 1 }}>
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: 'primary.light', width: 34, height: 34, fontSize: 14 }}>
+                          {studentName.charAt(0)}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={<Typography variant="subtitle2">{studentName}</Typography>}
+                        secondary={<Typography variant="caption" color="text.secondary">Rank #{idx + 1}</Typography>}
+                      />
+                      <Chip
+                        label={`${avgScore} pts`}
+                        size="small"
+                        color={idx === 0 ? 'success' : 'primary'}
+                        variant={idx === 0 ? 'filled' : 'outlined'}
+                        sx={{ fontWeight: 600 }}
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Due Soon & Faculty Workload Section */}
+      <Grid container spacing={3}>
+        {/* Tasks Due Within 7 Days */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight={600}>
+                Tasks Due Next 7 Days
+              </Typography>
+              <Chip label={`${tasksDueSoon.length} Tasks`} size="small" color="info" />
+            </Box>
+            {tasksDueSoon.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                No tasks due in the next 7 days.
+              </Typography>
+            ) : (
+              <List disablePadding>
+                {tasksDueSoon.slice(0, 5).map((t, idx) => (
+                  <ListItem
+                    key={t.taskId || idx}
+                    divider={idx < tasksDueSoon.length - 1}
+                    sx={{ px: 0, cursor: 'pointer' }}
+                    onClick={() => router.push(`/tasks/${t.taskId}`)}
+                  >
+                    <ListItemText
+                      primary={<Typography variant="subtitle2">{t.taskTitle || t.TaskTitle}</Typography>}
+                      secondary={`Student: ${t.student || t.Student} | Due: ${formatDate(t.taskDueDate || t.TaskDueDate)}`}
+                    />
+                    <StatusChip status={t.status || t.Status || 'In Progress'} />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Faculty Workload */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight={600}>
+                Faculty Workload (Projects Assigned)
+              </Typography>
+              <Chip label="Workload" size="small" color="secondary" />
+            </Box>
+            {facultyWorkload.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                No faculty assignment data available.
+              </Typography>
+            ) : (
+              <List disablePadding>
+                {facultyWorkload.slice(0, 5).map((f, idx) => (
+                  <ListItem key={idx} divider={idx < facultyWorkload.length - 1} sx={{ px: 0 }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'secondary.light', width: 34, height: 34, fontSize: 14 }}>
+                        {(f.facultyName || f.FacultyName || 'F').charAt(0)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={<Typography variant="subtitle2">{f.facultyName || f.FacultyName}</Typography>}
+                      secondary="Faculty Advisor"
+                    />
+                    <Chip
+                      label={`${f.totalProjects ?? f.TotalProjects ?? 0} Projects`}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 }

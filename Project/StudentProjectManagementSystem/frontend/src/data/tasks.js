@@ -2,7 +2,7 @@ const tasks = [
   {
     id: 1,
     title: 'Design UI mockups',
-    description: 'Create wireframes and high-fidelity mockups for the navigation app.',
+    StatusName: 'Create wireframes and high-fidelity mockups for the navigation app.',
     projectId: 1,
     assigneeId: 1,
     status: 'Done',
@@ -13,7 +13,7 @@ const tasks = [
   {
     id: 2,
     title: 'Implement BLE beacon integration',
-    description: 'Integrate Bluetooth Low Energy beacons for indoor positioning.',
+    StatusName: 'Integrate Bluetooth Low Energy beacons for indoor positioning.',
     projectId: 1,
     assigneeId: 7,
     status: 'In Progress',
@@ -24,7 +24,7 @@ const tasks = [
   {
     id: 3,
     title: 'Setup IoT sensors',
-    description: 'Install and configure energy monitoring sensors in Building A.',
+    StatusName: 'Install and configure energy monitoring sensors in Building A.',
     projectId: 2,
     assigneeId: 3,
     status: 'To Do',
@@ -35,7 +35,7 @@ const tasks = [
   {
     id: 4,
     title: 'Train NLP model',
-    description: 'Fine-tune language model on course materials dataset.',
+    StatusName: 'Fine-tune language model on course materials dataset.',
     projectId: 3,
     assigneeId: 1,
     status: 'In Progress',
@@ -46,7 +46,7 @@ const tasks = [
   {
     id: 5,
     title: 'Write project documentation',
-    description: 'Complete technical documentation and user manual.',
+    StatusName: 'Complete technical documentation and user manual.',
     projectId: 4,
     assigneeId: 7,
     status: 'Done',
@@ -57,7 +57,7 @@ const tasks = [
   {
     id: 6,
     title: 'Calibrate robotic arm',
-    description: 'Perform kinematic calibration of the 6-DOF arm.',
+    StatusName: 'Perform kinematic calibration of the 6-DOF arm.',
     projectId: 5,
     assigneeId: 4,
     status: 'Blocked',
@@ -68,7 +68,7 @@ const tasks = [
   {
     id: 7,
     title: 'Deploy smart contract',
-    description: 'Deploy certificate verification contract to testnet.',
+    StatusName: 'Deploy certificate verification contract to testnet.',
     projectId: 6,
     assigneeId: 3,
     status: 'Review',
@@ -79,7 +79,7 @@ const tasks = [
   {
     id: 8,
     title: 'User acceptance testing',
-    description: 'Conduct UAT sessions with faculty and students.',
+    StatusName: 'Conduct UAT sessions with faculty and students.',
     projectId: 1,
     assigneeId: 1,
     status: 'To Do',
@@ -90,7 +90,7 @@ const tasks = [
   {
     id: 9,
     title: 'API endpoint development',
-    description: 'Build REST API for chatbot backend services.',
+    StatusName: 'Build REST API for chatbot backend services.',
     projectId: 3,
     assigneeId: 6,
     status: 'In Progress',
@@ -101,7 +101,7 @@ const tasks = [
   {
     id: 10,
     title: 'Security audit',
-    description: 'Perform security review of blockchain verification module.',
+    StatusName: 'Perform security review of blockchain verification module.',
     projectId: 6,
     assigneeId: 7,
     status: 'To Do',
