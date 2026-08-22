@@ -10,8 +10,11 @@ step 3: create folder Controllers, Models, DTO, Validators, Data
 
 step 4: create models
 
-step 5: if one to one relationship exists then add the field with public Model Model = null!
+step 5: create app db context
 
-step 6: if one to many relationship exists then add ICollection to model which is one
+step 6: if one to one relationship exists then add the field with public Model Model = null!
 
-step 7: create app db context
+step 7: if one to many relationship exists then add ICollection to model which is one
+
+step 8: in program.cs add builder.service.adddbcontext usesqlserver
+
