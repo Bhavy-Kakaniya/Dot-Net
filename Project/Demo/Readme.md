@@ -18,3 +18,6 @@ step 7: if one to many relationship exists then add ICollection to model which i
 
 step 8: in program.cs add builder.service.adddbcontext usesqlserver
 
+step 9: create the first migration
+    dotnet ef migrations add InitialCreate # 
+    dotnet ef database update

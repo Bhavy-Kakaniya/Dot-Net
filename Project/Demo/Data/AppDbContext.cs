@@ -19,27 +19,30 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>()
         .HasOne(u => u.Student)
         .WithOne(s => s.User)
-        .HasForeignKey<Student>(s => s.UserId);
+        .HasForeignKey<Student>(s => s.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
 
         // one to one user to faculty
         modelBuilder.Entity<User>()
         .HasOne(u => u.Faculty)
         .WithOne(f => f.User)
-        .HasForeignKey<Faculty>(f => f.UserId);
+        .HasForeignKey<Faculty>(f => f.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
 
         // one to many faculty to student
         modelBuilder.Entity<Faculty>()
         .HasMany(f => f.Students)
         .WithOne(s => s.Faculty)
-        .HasForeignKey(s => s.facultyid);
+        .HasForeignKey(s => s.FacultyId)
+        .OnDelete(DeleteBehavior.NoAction);
 
         modelBuilder.Entity<User>()
-        .Property(u => u.name)
+        .Property(u => u.Name)
         .IsRequired()
         .HasMaxLength(30);
 
         modelBuilder.Entity<User>()
-        .Property(u => u.email)
+        .Property(u => u.Email)
         .IsRequired()
         .HasMaxLength(50);
     }
