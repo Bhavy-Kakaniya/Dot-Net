@@ -9,3 +9,7 @@ step 2: add this 2 package
 step 3: create folder Controllers, Models, DTO, Validators, Data
 
 step 4: create models
+
+step 5: if one to one relationship exists then add the field with public Model Model = null!
+
+step 6: if one to many relationship exists then add ICollection to model which is one
