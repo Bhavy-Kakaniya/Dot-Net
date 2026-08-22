@@ -21,3 +21,5 @@ step 8: in program.cs add builder.service.adddbcontext usesqlserver
 step 9: create the first migration
     dotnet ef migrations add InitialCreate # 
     dotnet ef database update
+
+step 10: create DTO and common api response
