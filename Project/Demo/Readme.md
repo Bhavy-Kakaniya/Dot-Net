@@ -23,3 +23,11 @@ step 9: create the first migration
     dotnet ef database update
 
 step 10: create DTO and common api response
+
+step 11: install fluent validation packages
+    dotnet add package FluentValidation
+    dotnet add package FluentValidation.AspNetCore
+
+step 12: add fluent validation service in program.cs
+
+step 13: 
