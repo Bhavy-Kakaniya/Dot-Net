@@ -1,6 +1,6 @@
 namespace Demo.DTOs;
 
-public class Faculty
+public class FacultyDTOs
 {
     public int UserId { get; set; }
     public string Department { get; set; } = string.Empty;
