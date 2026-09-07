@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace StudentProjectManagementSystem.DTOs.Status
 {
     public class UpdateStatusDto
