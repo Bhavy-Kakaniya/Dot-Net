@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using StudentProjectManagementSystem.Data;
 using StudentProjectManagementSystem.DTOs.Common;
 using StudentProjectManagementSystem.DTOs.Role;
-using StudentProjectManagementSystem.Interfaces;
 using StudentProjectManagementSystem.Models;
 
 namespace StudentProjectManagementSystem.Controllers
@@ -10,34 +11,35 @@ namespace StudentProjectManagementSystem.Controllers
     [Route("api/[controller]")]
     public class RoleController : ControllerBase
     {
-        private readonly IRoleRepository _roleRepository;
+        private readonly ApplicationDbContext _context;
 
-        public RoleController(IRoleRepository roleRepository)
+        public RoleController(ApplicationDbContext context)
         {
-            _roleRepository = roleRepository;
+            _context = context;
         }
 
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<RoleResponseDto>>>> GetAllRoles()
         {
-            var roles = await _roleRepository.GetAllRolesAsync();
-            var response = roles.Select(r => new RoleResponseDto
+            var roles = await _context.Roles.Select(r => new RoleResponseDto
             {
                 RoleId = r.RoleId,
                 RoleName = r.RoleName,
                 Description = r.Description
-            });
-            return Ok(ApiResponse<IEnumerable<RoleResponseDto>>.SuccessResponse("Roles retrieved successfully", response));
+            }).ToListAsync();
+
+            return Ok(ApiResponse<IEnumerable<RoleResponseDto>>.SuccessResponse("Roles retrieved successfully", roles));
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<RoleResponseDto>>> GetRoleById(int id)
         {
-            var role = await _roleRepository.GetRoleByIdAsync(id);
+            var role = await _context.Roles.FindAsync(id);
             if (role == null)
             {
                 return NotFound(ApiResponse<RoleResponseDto>.ErrorResponse($"Role with {id} not found"));
             }
+
             var response = new RoleResponseDto
             {
                 RoleId = role.RoleId,
@@ -48,39 +50,38 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> CreateRole(CreateRoleDto createRoleDto)
+        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> CreateRole(CreateRoleDto dto)
         {
             var role = new Role
             {
-                RoleName = createRoleDto.RoleName,
-                Description = createRoleDto.Description
+                RoleName = dto.RoleName,
+                Description = dto.Description
             };
-            await _roleRepository.CreateRoleAsync(role);
+            _context.Roles.Add(role);
+            await _context.SaveChangesAsync();
+
             var response = new RoleResponseDto
             {
                 RoleId = role.RoleId,
                 RoleName = role.RoleName,
                 Description = role.Description
             };
-
-            return CreatedAtAction(
-                nameof(GetRoleById),
-                new { id = role.RoleId },
-                ApiResponse<RoleResponseDto>.SuccessResponse("Role created successfully", response)
-            );
+            return CreatedAtAction(nameof(GetRoleById), new { id = role.RoleId }, ApiResponse<RoleResponseDto>.SuccessResponse("Role created successfully", response));
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> UpdateRole(int id, UpdateRoleDto updateRoleDto)
+        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> UpdateRole(int id, UpdateRoleDto dto)
         {
-            var role = await _roleRepository.GetRoleByIdAsync(id);
+            var role = await _context.Roles.FindAsync(id);
             if (role == null)
             {
                 return NotFound(ApiResponse<RoleResponseDto>.ErrorResponse($"Role with {id} not found"));
             }
-            role.RoleName = updateRoleDto.RoleName;
-            role.Description = updateRoleDto.Description;
-            await _roleRepository.UpdateRoleAsync(role);
+
+            role.RoleName = dto.RoleName;
+            role.Description = dto.Description;
+            await _context.SaveChangesAsync();
+
             var response = new RoleResponseDto
             {
                 RoleId = role.RoleId,
@@ -93,11 +94,14 @@ namespace StudentProjectManagementSystem.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteRole(int id)
         {
-            var deleted = await _roleRepository.DeleteRoleAsync(id);
-            if (!deleted)
+            var role = await _context.Roles.FindAsync(id);
+            if (role == null)
             {
                 return NotFound(ApiResponse<object>.ErrorResponse($"Role with {id} not found"));
             }
+
+            _context.Roles.Remove(role);
+            await _context.SaveChangesAsync();
             return Ok(ApiResponse<object>.SuccessResponse("Role deleted successfully", null!));
         }
     }
