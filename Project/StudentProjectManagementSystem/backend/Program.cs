@@ -6,6 +6,7 @@ using StudentProjectManagementSystem.Data;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using StudentProjectManagementSystem.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddScoped<TokenService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -33,9 +36,7 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-        )
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 });
 
@@ -43,10 +44,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://127.0.0.1:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins("http://localhost:3000", "http://127.0.0.1:3000").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
     });
 });
 
@@ -64,9 +62,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFrontend");
-
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
