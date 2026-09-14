@@ -22,9 +22,19 @@ import { useSnackbar } from '@/hooks/useSnackbar';
 import { validateRequired } from '@/utils/validation';
 import { projectTaskService, projectAllocationService, projectService, userService, statusService, priorityService, } from '@/services/api';
 
+import { useAuth } from '@/hooks/useAuth';
+
 export default function AddTaskPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const { isStudent } = useAuth();
+
+  useEffect(() => {
+    if (isStudent) {
+      showSnackbar('Students are not permitted to add tasks. You can view & provide feedback on assigned tasks.', 'warning');
+      router.push('/tasks');
+    }
+  }, [isStudent, router, showSnackbar]);
 
   const [allocations, setAllocations] = useState([]);
   const [statuses, setStatuses] = useState([]);

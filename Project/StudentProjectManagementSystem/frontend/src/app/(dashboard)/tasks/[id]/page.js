@@ -10,6 +10,7 @@ import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import LinearProgress from '@mui/material/LinearProgress';
 import Alert from '@mui/material/Alert';
+import TextField from '@mui/material/TextField';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PageHeader from '@/components/PageHeader/PageHeader';
@@ -17,6 +18,7 @@ import StatusChip from '@/components/StatusChip/StatusChip';
 import Loader from '@/components/Loader/Loader';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/formatters';
 import { projectTaskService, projectAllocationService, projectService, userService, statusService, priorityService } from '@/services/api';
 
@@ -25,6 +27,7 @@ export default function TaskDetailPage({ params }) {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const { showSnackbar } = useSnackbar();
+  const { isStudent } = useAuth();
 
   const [task, setTask] = useState(null);
   const [allocation, setAllocation] = useState(null);
@@ -36,6 +39,8 @@ export default function TaskDetailPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [studentFeedback, setStudentFeedback] = useState('');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -44,15 +49,12 @@ export default function TaskDetailPage({ params }) {
       try {
         const taskData = await projectTaskService.getById(id);
         setTask(taskData);
+        setStudentFeedback(taskData.studentRemarks || '');
 
         const [alloc, statusData, priorityData] = await Promise.all([
-          taskData.projectAllocationId
-            ? projectAllocationService.getById(taskData.projectAllocationId).catch(() => null)
-            : null,
+          taskData.projectAllocationId ? projectAllocationService.getById(taskData.projectAllocationId).catch(() => null) : null,
           taskData.taskStatusId ? statusService.getById(taskData.taskStatusId).catch(() => null) : null,
-          taskData.taskPriorityId
-            ? priorityService.getById(taskData.taskPriorityId).catch(() => null)
-            : null,
+          taskData.taskPriorityId ? priorityService.getById(taskData.taskPriorityId).catch(() => null) : null,
         ]);
 
         setAllocation(alloc);
@@ -77,10 +79,23 @@ export default function TaskDetailPage({ params }) {
       }
     }
 
-    if (id) {
-      loadData();
-    }
+    if (id) loadData();
   }, [id]);
+
+  const handleSaveFeedback = async () => {
+    if (!studentFeedback.trim()) return;
+    setSubmittingFeedback(true);
+    try {
+      const updatedTask = { ...task, studentRemarks: studentFeedback.trim() };
+      await projectTaskService.update(id, updatedTask);
+      setTask(updatedTask);
+      showSnackbar('Feedback submitted successfully!');
+    } catch (err) {
+      showSnackbar(err.message || 'Failed to submit feedback', 'error');
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  };
 
   const handleDelete = async () => {
     try {
@@ -92,19 +107,13 @@ export default function TaskDetailPage({ params }) {
     }
   };
 
-  if (loading) {
-    return <Loader message="Loading task details..." />;
-  }
+  if (loading) return <Loader message="Loading task details..." />;
 
   if (error || !task) {
     return (
       <Box>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error || 'Task not found'}
-        </Alert>
-        <Button variant="outlined" onClick={() => router.push('/tasks')}>
-          Back to Tasks
-        </Button>
+        <Alert severity="error" sx={{ mb: 2 }}>{error || 'Task not found'}</Alert>
+        <Button variant="outlined" onClick={() => router.push('/tasks')}>Back to Tasks</Button>
       </Box>
     );
   }
@@ -113,166 +122,70 @@ export default function TaskDetailPage({ params }) {
 
   return (
     <Box>
-      <PageHeader
-        title={`Task #${task.taskId}: ${task.taskTitle}`}
-        subtitle={`Status: ${statusName} | Priority: ${priorityName}`}
-        breadcrumbs={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Tasks', href: '/tasks' },
-          { label: `Task #${id}`, href: `/tasks/${id}` },
-        ]}
-      />
+      <PageHeader title={`Task #${task.taskId}: ${task.taskTitle}`} subtitle={`Status: ${statusName} | Priority: ${priorityName}`} breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Tasks', href: '/tasks' }, { label: `Task #${id}`, href: `/tasks/${id}` }]} />
 
       <Grid container spacing={3}>
-        {/* Main Details */}
         <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Typography variant="h6" fontWeight={600}>
-                  Task Overview
-                </Typography>
+                <Typography variant="h6" fontWeight={600}>Task Overview</Typography>
                 <StatusChip status={statusName} />
                 <StatusChip status={priorityName} />
               </Box>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  startIcon={<EditIcon />}
-                  variant="outlined"
-                  size="small"
-                  onClick={() => router.push(`/tasks/${id}/edit`)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  startIcon={<DeleteIcon />}
-                  variant="outlined"
-                  color="error"
-                  size="small"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  Delete
-                </Button>
-              </Box>
+              {!isStudent && (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button startIcon={<EditIcon />} variant="outlined" size="small" onClick={() => router.push(`/tasks/${id}/edit`)}>Edit</Button>
+                  <Button startIcon={<DeleteIcon />} variant="outlined" color="error" size="small" onClick={() => setDeleteOpen(true)}>Delete</Button>
+                </Box>
+              )}
             </Box>
 
             <Divider sx={{ mb: 2.5 }} />
 
             <Grid container spacing={2.5}>
               <Grid size={12}>
-                <Typography variant="caption" color="text.secondary">
-                  Description
-                </Typography>
-                <Typography variant="body1" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>
-                  {task.taskDescription || 'No description provided.'}
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Description</Typography>
+                <Typography variant="body1" sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>{task.taskDescription || 'No description provided.'}</Typography>
               </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Assigned Score
-                </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {task.assignedScore}
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Earned Score
-                </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {task.earnedScore !== null && task.earnedScore !== undefined ? task.earnedScore : '—'}
-                </Typography>
-              </Grid>
-
+              <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Assigned Score</Typography><Typography variant="body1" fontWeight={600}>{task.assignedScore}</Typography></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Earned Score</Typography><Typography variant="body1" fontWeight={600}>{task.earnedScore !== null && task.earnedScore !== undefined ? task.earnedScore : '—'}</Typography></Grid>
               <Grid size={12}>
-                <Typography variant="caption" color="text.secondary">
-                  Task Progress ({progressVal.toFixed(0)}%)
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Task Progress ({progressVal.toFixed(0)}%)</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.5 }}>
-                  <LinearProgress
-                    variant="determinate"
-                    value={progressVal}
-                    sx={{ flex: 1, height: 8, borderRadius: 4 }}
-                  />
-                  <Typography variant="body2" fontWeight={600}>
-                    {progressVal.toFixed(0)}%
-                  </Typography>
+                  <LinearProgress variant="determinate" value={progressVal} sx={{ flex: 1, height: 8, borderRadius: 4 }} />
+                  <Typography variant="body2" fontWeight={600}>{progressVal.toFixed(0)}%</Typography>
                 </Box>
               </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Assigned Date
-                </Typography>
-                <Typography variant="body2">
-                  {formatDate(task.taskAssignedDate)}
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Start Date
-                </Typography>
-                <Typography variant="body2">
-                  {formatDate(task.taskStartDate)}
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Due Date
-                </Typography>
-                <Typography variant="body2" fontWeight={500}>
-                  {formatDate(task.taskDueDate)}
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Completed Date
-                </Typography>
-                <Typography variant="body2">
-                  {formatDate(task.taskCompletedDate)}
-                </Typography>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" color="text.secondary">
-                  Next Follow-Up Date
-                </Typography>
-                <Typography variant="body2">
-                  {formatDate(task.nextFollowUpDate)}
-                </Typography>
-              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Assigned Date</Typography><Typography variant="body2">{formatDate(task.taskAssignedDate)}</Typography></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Start Date</Typography><Typography variant="body2">{formatDate(task.taskStartDate)}</Typography></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Due Date</Typography><Typography variant="body2" fontWeight={500}>{formatDate(task.taskDueDate)}</Typography></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Completed Date</Typography><Typography variant="body2">{formatDate(task.taskCompletedDate)}</Typography></Grid>
+              <Grid size={{ xs: 12, sm: 6 }}><Typography variant="caption" color="text.secondary">Next Follow-Up Date</Typography><Typography variant="body2">{formatDate(task.nextFollowUpDate)}</Typography></Grid>
             </Grid>
           </Paper>
 
-          {/* Remarks Section */}
+          {/* Remarks & Feedback Section */}
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" fontWeight={600} gutterBottom>
-              Feedback & Remarks
-            </Typography>
+            <Typography variant="h6" fontWeight={600} gutterBottom>Feedback & Remarks</Typography>
             <Divider sx={{ mb: 2 }} />
 
             <Grid container spacing={2}>
               <Grid size={12}>
-                <Typography variant="subtitle2" color="primary" gutterBottom>
-                  Faculty Remarks
-                </Typography>
-                <Typography variant="body2" sx={{ fontStyle: task.facultyRemarks ? 'normal' : 'italic', color: task.facultyRemarks ? 'text.primary' : 'text.secondary' }}>
-                  {task.facultyRemarks || 'No faculty remarks.'}
-                </Typography>
+                <Typography variant="subtitle2" color="primary" gutterBottom>Faculty Remarks</Typography>
+                <Typography variant="body2" sx={{ fontStyle: task.facultyRemarks ? 'normal' : 'italic', color: task.facultyRemarks ? 'text.primary' : 'text.secondary' }}>{task.facultyRemarks || 'No faculty remarks.'}</Typography>
               </Grid>
 
               <Grid size={12}>
-                <Typography variant="subtitle2" color="primary" gutterBottom>
-                  Student Remarks
-                </Typography>
-                <Typography variant="body2" sx={{ fontStyle: task.studentRemarks ? 'normal' : 'italic', color: task.studentRemarks ? 'text.primary' : 'text.secondary' }}>
-                  {task.studentRemarks || 'No student remarks.'}
-                </Typography>
+                <Typography variant="subtitle2" color="primary" gutterBottom>Student Remarks / Feedback</Typography>
+                {isStudent ? (
+                  <Box sx={{ mt: 1 }}>
+                    <TextField fullWidth multiline rows={3} label="Give your task feedback..." value={studentFeedback} onChange={(e) => setStudentFeedback(e.target.value)} sx={{ mb: 1.5 }} />
+                    <Button variant="contained" size="small" onClick={handleSaveFeedback} disabled={submittingFeedback}>{submittingFeedback ? 'Submitting...' : 'Submit Feedback'}</Button>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" sx={{ fontStyle: task.studentRemarks ? 'normal' : 'italic', color: task.studentRemarks ? 'text.primary' : 'text.secondary' }}>{task.studentRemarks || 'No student remarks.'}</Typography>
+                )}
               </Grid>
             </Grid>
           </Paper>

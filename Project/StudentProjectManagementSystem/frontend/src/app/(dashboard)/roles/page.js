@@ -87,7 +87,6 @@ export default function RolesPage() {
   };
 
   const columns = [
-    { id: 'roleId', label: 'ID', minWidth: 60 },
     { id: 'roleName', label: 'Role Name', minWidth: 180 },
     { id: 'description', label: 'Description', minWidth: 240 },
     {

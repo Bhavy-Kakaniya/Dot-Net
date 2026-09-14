@@ -106,7 +106,6 @@ export default function UserRolesPage() {
   };
 
   const columns = [
-    { id: 'rolePermissionId', label: 'ID', minWidth: 60 },
     { id: 'userName', label: 'User Name', minWidth: 160 },
     { id: 'userEmail', label: 'Email', minWidth: 200 },
     { id: 'userCode', label: 'User Code', minWidth: 120 },

@@ -29,11 +29,21 @@ import {
   priorityService,
 } from '@/services/api';
 
+import { useAuth } from '@/hooks/useAuth';
+
 export default function EditTaskPage({ params }) {
   const router = useRouter();
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   const { showSnackbar } = useSnackbar();
+  const { isStudent } = useAuth();
+
+  useEffect(() => {
+    if (isStudent) {
+      showSnackbar('Students are not permitted to edit tasks. You can view & provide feedback on assigned tasks.', 'warning');
+      router.push('/tasks');
+    }
+  }, [isStudent, router, showSnackbar]);
 
   const [allocations, setAllocations] = useState([]);
   const [statuses, setStatuses] = useState([]);

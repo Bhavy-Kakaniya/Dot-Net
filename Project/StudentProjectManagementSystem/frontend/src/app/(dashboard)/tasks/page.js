@@ -20,6 +20,7 @@ import Loader from '@/components/Loader/Loader';
 import { usePagination } from '@/hooks/usePagination';
 import { useTableFilter } from '@/hooks/useTableFilter';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/formatters';
 import {
   projectTaskService,
@@ -33,8 +34,10 @@ import {
 export default function TasksPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const { user, isAdmin, isFaculty, isStudent } = useAuth();
 
   const [tasks, setTasks] = useState([]);
+  const [allocations, setAllocations] = useState([]);
   const [allocationsMap, setAllocationsMap] = useState({});
   const [statusesMap, setStatusesMap] = useState({});
   const [prioritiesMap, setPrioritiesMap] = useState({});
@@ -63,6 +66,8 @@ export default function TasksPage() {
         statusService.getAll().catch(() => []),
         priorityService.getAll().catch(() => []),
       ]);
+
+      setAllocations(allocationsData || []);
 
       const pMap = {};
       (projectsData || []).forEach((p) => {
@@ -116,9 +121,26 @@ export default function TasksPage() {
     fetchData();
   }, [fetchData]);
 
-  // Enrich rows with resolved FK names
+  // Filter & enrich rows by user role
   const enrichedTasks = useMemo(() => {
-    return tasks.map((t) => {
+    let filteredTasks = tasks;
+
+    if (isStudent && user) {
+      const studentAllocationIds = allocations
+        .filter((a) => Number(a.studentId) === Number(user.id) || a.student?.email === user.email)
+        .map((a) => Number(a.projectAllocationId));
+      filteredTasks = tasks.filter((t) => studentAllocationIds.includes(Number(t.projectAllocationId)));
+    } else if (isFaculty && user) {
+      const facultyAllocationIds = allocations
+        .filter((a) => Number(a.facultyId) === Number(user.id) || a.faculty?.email === user.email)
+        .map((a) => Number(a.projectAllocationId));
+
+      if (facultyAllocationIds.length > 0) {
+        filteredTasks = tasks.filter((t) => facultyAllocationIds.includes(Number(t.projectAllocationId)));
+      }
+    }
+
+    return filteredTasks.map((t) => {
       const statusName = statusesMap[t.taskStatusId] || `Status #${t.taskStatusId}`;
       const priorityName = prioritiesMap[t.taskPriorityId] || `Priority #${t.taskPriorityId}`;
       const allocationName = allocationsMap[t.projectAllocationId] || `Allocation #${t.projectAllocationId}`;
@@ -130,7 +152,7 @@ export default function TasksPage() {
         allocation: allocationName,
       };
     });
-  }, [tasks, allocationsMap, statusesMap, prioritiesMap]);
+  }, [tasks, allocations, allocationsMap, statusesMap, prioritiesMap, isStudent, isFaculty, user]);
 
   const { page, rowsPerPage, handlePageChange, handleRowsPerPageChange, resetPage, paginate } = usePagination();
   const { search, setSearch, filters, handleFilterChange, resetFilters, filteredData } = useTableFilter(
@@ -156,7 +178,6 @@ export default function TasksPage() {
   };
 
   const columns = [
-    { id: 'taskId', label: 'ID', minWidth: 60 },
     { id: 'taskTitle', label: 'Task Title', minWidth: 180 },
     { id: 'allocation', label: 'Project / Allocation', minWidth: 200 },
     {
@@ -202,40 +223,25 @@ export default function TasksPage() {
       align: 'center',
       render: (row) => (
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Tooltip title="View">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/tasks/${row.taskId}`);
-              }}
-            >
+          <Tooltip title={isStudent ? "View & Give Feedback" : "View"}>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); router.push(`/tasks/${row.taskId}`); }}>
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/tasks/${row.taskId}/edit`);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteTarget(row);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {!isStudent && (
+            <Tooltip title="Edit / Update">
+              <IconButton size="small" onClick={(e) => { e.stopPropagation(); router.push(`/tasks/${row.taskId}/edit`); }}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          {!isStudent && (
+            <Tooltip title="Delete">
+              <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); setDeleteTarget(row); }}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       ),
     },
@@ -244,14 +250,14 @@ export default function TasksPage() {
   return (
     <Box>
       <PageHeader
-        title="Project Tasks"
-        subtitle="Manage tasks, scores, priorities, and assignments"
+        title={isStudent ? 'My Milestone Tasks' : 'Project Tasks'}
+        subtitle={isStudent ? 'Track and update progress on your assigned tasks' : 'Manage tasks, scores, priorities, and assignments'}
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Tasks', href: '/tasks' },
         ]}
-        actionLabel="Add Task"
-        actionHref="/tasks/add"
+        actionLabel={isStudent ? null : 'Add Task'}
+        actionHref={isStudent ? null : '/tasks/add'}
       />
 
       {error && (
@@ -287,8 +293,8 @@ export default function TasksPage() {
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
           onRowClick={(row) => router.push(`/tasks/${row.taskId}`)}
-          emptyTitle="No tasks found"
-          emptyDescription="Create a task to assign work to a project allocation."
+          emptyTitle={isStudent ? 'No milestone tasks assigned' : 'No tasks found'}
+          emptyDescription={isStudent ? 'You currently do not have any pending tasks.' : 'Create a task to assign work to a project allocation.'}
         />
       )}
 

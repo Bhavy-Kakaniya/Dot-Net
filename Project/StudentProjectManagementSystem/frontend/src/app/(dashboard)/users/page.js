@@ -101,7 +101,6 @@ export default function UsersPage() {
   };
 
   const columns = [
-    { id: 'userId', label: 'ID', minWidth: 60 },
     { id: 'fullName', label: 'Full Name', minWidth: 160 },
     { id: 'userCode', label: 'User Code', minWidth: 120 },
     { id: 'email', label: 'Email', minWidth: 200 },

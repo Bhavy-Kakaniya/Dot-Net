@@ -9,6 +9,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
+import Chip from '@mui/material/Chip';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -20,21 +21,27 @@ import SchoolIcon from '@mui/icons-material/School';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import { usePathname, useRouter } from 'next/navigation';
 import { SIDEBAR_WIDTH, APP_NAME } from '@/utils/constants';
+import { useAuth } from '@/hooks/useAuth';
 
-const menuItems = [
-  { title: 'Dashboard', path: '/dashboard', icon: DashboardIcon },
-  { title: 'Users', path: '/users', icon: PeopleIcon },
-  { title: 'Roles', path: '/roles', icon: SecurityIcon },
-  { title: 'User Roles', path: '/user-roles', icon: AssignmentIndIcon },
-  { title: 'Projects', path: '/projects', icon: FolderIcon },
-  { title: 'Allocations', path: '/allocations', icon: AssignmentTurnedInIcon },
-  { title: 'Tasks', path: '/tasks', icon: TaskIcon },
-  { title: 'Profile', path: '/profile', icon: PersonIcon },
+const allMenuItems = [
+  { title: 'Dashboard', path: '/dashboard', icon: DashboardIcon, allowedRoles: ['Admin', 'Faculty', 'Student'] },
+  { title: 'Users', path: '/users', icon: PeopleIcon, allowedRoles: ['Admin'] },
+  { title: 'Roles', path: '/roles', icon: SecurityIcon, allowedRoles: ['Admin'] },
+  { title: 'User Roles', path: '/user-roles', icon: AssignmentIndIcon, allowedRoles: ['Admin'] },
+  { title: 'Projects', path: '/projects', icon: FolderIcon, allowedRoles: ['Admin', 'Faculty', 'Student'] },
+  { title: 'Allocations', path: '/allocations', icon: AssignmentTurnedInIcon, allowedRoles: ['Admin', 'Faculty'] },
+  { title: 'Tasks', path: '/tasks', icon: TaskIcon, allowedRoles: ['Admin', 'Faculty', 'Student'] },
+  { title: 'Profile', path: '/profile', icon: PersonIcon, allowedRoles: ['Admin', 'Faculty', 'Student'] },
 ];
 
 function SidebarContent({ onNavigate }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, role, isAdmin, isFaculty, isStudent } = useAuth();
+
+  const currentRole = isAdmin ? 'Admin' : isFaculty ? 'Faculty' : isStudent ? 'Student' : (role || 'Student');
+
+  const visibleMenuItems = allMenuItems.filter((item) => item.allowedRoles.includes(currentRole));
 
   const handleClick = (path) => {
     router.push(path);
@@ -46,22 +53,30 @@ function SidebarContent({ onNavigate }) {
     return pathname.startsWith(path);
   };
 
+  const getRoleBadgeColor = () => {
+    if (isAdmin) return 'error';
+    if (isFaculty) return 'primary';
+    return 'success';
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <SchoolIcon sx={{ color: 'primary.main', fontSize: 32 }} />
-        <Box>
-          <Typography variant="subtitle1" fontWeight={700} color="primary.main" lineHeight={1.2}>
-            SPMS
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {APP_NAME}
-          </Typography>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="subtitle1" fontWeight={700} color="primary.main">SPMS</Typography>
+          <Typography variant="caption" color="text.secondary" display="block">{APP_NAME}</Typography>
         </Box>
+        <Chip
+          label={currentRole}
+          color={getRoleBadgeColor()}
+          size="small"
+          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+        />
       </Box>
       <Divider />
       <List sx={{ flex: 1, px: 1.5, py: 2 }}>
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           return (
@@ -82,10 +97,7 @@ function SidebarContent({ onNavigate }) {
                 <ListItemIcon sx={{ minWidth: 40, color: active ? 'inherit' : 'text.secondary' }}>
                   <Icon fontSize="small" />
                 </ListItemIcon>
-                <ListItemText
-                  primary={item.title}
-                  primaryTypographyProps={{ fontSize: 14, fontWeight: active ? 600 : 500 }}
-                />
+                <ListItemText primary={item.title} primaryTypographyProps={{ fontSize: 14, fontWeight: active ? 600 : 500 }} />
               </ListItemButton>
             </ListItem>
           );

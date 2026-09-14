@@ -19,11 +19,13 @@ import Loader from '@/components/Loader/Loader';
 import { usePagination } from '@/hooks/usePagination';
 import { useTableFilter } from '@/hooks/useTableFilter';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { useAuth } from '@/hooks/useAuth';
 import { projectService, projectAllocationService } from '@/services/api';
 
 export default function ProjectsPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const { user, isAdmin, isFaculty, isStudent } = useAuth();
 
   const [projects, setProjects] = useState([]);
   const [allocations, setAllocations] = useState([]);
@@ -55,9 +57,24 @@ export default function ProjectsPage() {
     fetchData();
   }, [fetchData]);
 
-  // Enrich project rows with allocation stats
+  // Enrich & filter project rows based on role
   const enrichedProjects = useMemo(() => {
-    return projects.map((p) => {
+    let filteredProjects = projects;
+
+    if (isStudent && user) {
+      // Students only see projects allocated to them
+      const studentAllocatedProjectIds = allocations
+        .filter((a) => Number(a.studentId) === Number(user.id) || a.student?.email === user.email)
+        .map((a) => Number(a.projectId));
+      filteredProjects = projects.filter((p) => studentAllocatedProjectIds.includes(Number(p.projectId)));
+    } else if (isFaculty && user) {
+      const facultyProjectIds = allocations
+        .filter((a) => Number(a.facultyId) === Number(user.id) || a.faculty?.email === user.email)
+        .map((a) => Number(a.projectId));
+      filteredProjects = projects.filter((p) => facultyProjectIds.includes(Number(p.projectId)));
+    }
+
+    return filteredProjects.map((p) => {
       const pAllocations = allocations.filter((a) => Number(a.projectId) === Number(p.projectId));
       const totalAllocations = pAllocations.length;
       const avgProgress =
@@ -73,7 +90,7 @@ export default function ProjectsPage() {
         progress: avgProgress,
       };
     });
-  }, [projects, allocations]);
+  }, [projects, allocations, isStudent, isFaculty, user]);
 
   const { page, rowsPerPage, handlePageChange, handleRowsPerPageChange, resetPage, paginate } = usePagination();
   const { search, setSearch, resetFilters, filteredData } = useTableFilter(
@@ -99,7 +116,6 @@ export default function ProjectsPage() {
   };
 
   const columns = [
-    { id: 'projectId', label: 'ID', minWidth: 60 },
     { id: 'projectTitle', label: 'Project Title', minWidth: 240 },
     {
       id: 'allocationsCount',
@@ -139,29 +155,37 @@ export default function ProjectsPage() {
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                router.push(`/projects/${row.projectId}/edit`);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteTarget(row);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+
+          {/* Edit & Delete reserved for Admin / Faculty */}
+          {!isStudent && (
+            <>
+              <Tooltip title="Edit">
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/projects/${row.projectId}/edit`);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              {isAdmin && (
+                <Tooltip title="Delete">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget(row);
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </>
+          )}
         </Box>
       ),
     },
@@ -170,14 +194,14 @@ export default function ProjectsPage() {
   return (
     <Box>
       <PageHeader
-        title="Projects"
-        subtitle="Manage academic and student projects"
+        title={isStudent ? 'My Assigned Projects' : 'Projects'}
+        subtitle={isStudent ? 'View your allocated capstone project details' : 'Manage academic and student projects'}
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Projects', href: '/projects' },
         ]}
-        actionLabel="Add Project"
-        actionHref="/projects/add"
+        actionLabel={isAdmin ? 'Add Project' : null}
+        actionHref={isAdmin ? '/projects/add' : null}
       />
 
       {error && (
@@ -205,8 +229,8 @@ export default function ProjectsPage() {
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
           onRowClick={(row) => router.push(`/projects/${row.projectId}`)}
-          emptyTitle="No projects found"
-          emptyDescription="Create a project to get started."
+          emptyTitle={isStudent ? 'No assigned project found' : 'No projects found'}
+          emptyDescription={isStudent ? 'You currently do not have an active project allocation.' : 'Create a project to get started.'}
         />
       )}
 

@@ -10,16 +10,22 @@ import Alert from '@mui/material/Alert';
 import InputAdornment from '@mui/material/InputAdornment';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
+import Chip from '@mui/material/Chip';
 import AuthLayout from '@/layouts/AuthLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { validateEmail, validatePassword } from '@/utils/validation';
-import { DEMO_CREDENTIALS } from '@/utils/constants';
 
 export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const fillDemo = (demoEmail, demoPass) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    setErrors({});
+  };
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,9 +69,35 @@ export default function LoginPage() {
       <Typography variant="h6" fontWeight={600} gutterBottom>
         Sign In
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Demo: {DEMO_CREDENTIALS.email} / {DEMO_CREDENTIALS.password}
-      </Typography>
+
+      <Box sx={{ mb: 2.5, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+        <Typography variant="subtitle2" color="text.secondary" fontWeight={600} gutterBottom>
+          Demo Credentials (Click to Auto-fill):
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+          <Chip
+            label="Admin: admin@spms.edu"
+            color="error"
+            variant="outlined"
+            clickable
+            onClick={() => fillDemo('admin@spms.edu', 'Admin@123')}
+          />
+          <Chip
+            label="Faculty: faculty@spms.edu"
+            color="primary"
+            variant="outlined"
+            clickable
+            onClick={() => fillDemo('faculty@spms.edu', 'Faculty@123')}
+          />
+          <Chip
+            label="Student: student@spms.edu"
+            color="success"
+            variant="outlined"
+            clickable
+            onClick={() => fillDemo('student@spms.edu', 'Student@123')}
+          />
+        </Box>
+      </Box>
 
       {submitError && (
         <Alert severity="error" sx={{ mb: 2 }}>

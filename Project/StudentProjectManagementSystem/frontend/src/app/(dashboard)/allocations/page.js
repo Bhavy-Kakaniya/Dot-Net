@@ -20,12 +20,15 @@ import Loader from '@/components/Loader/Loader';
 import { usePagination } from '@/hooks/usePagination';
 import { useTableFilter } from '@/hooks/useTableFilter';
 import { useSnackbar } from '@/hooks/useSnackbar';
+import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/utils/formatters';
 import { projectAllocationService, projectService, userService } from '@/services/api';
 
 export default function AllocationsPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const { user, isAdmin, isFaculty } = useAuth();
+
   const [allocations, setAllocations] = useState([]);
   const [projectsMap, setProjectsMap] = useState({});
   const [usersMap, setUsersMap] = useState({});
@@ -69,16 +72,24 @@ export default function AllocationsPage() {
     fetchData();
   }, [fetchData]);
 
-  // Enrich rows with resolved FK names for table display & filtering
+  // Filter & enrich rows by user role
   const enrichedAllocations = useMemo(() => {
-    return allocations.map((item) => ({
+    let filteredAllocations = allocations;
+
+    if (isFaculty && user) {
+      filteredAllocations = allocations.filter(
+        (a) => Number(a.facultyId) === Number(user.id) || a.faculty?.email === user.email
+      );
+    }
+
+    return filteredAllocations.map((item) => ({
       ...item,
       id: item.projectAllocationId,
       projectTitle: projectsMap[item.projectId] || `Project #${item.projectId}`,
       studentName: usersMap[item.studentId] || `Student #${item.studentId}`,
       facultyName: usersMap[item.facultyId] || `Faculty #${item.facultyId}`,
     }));
-  }, [allocations, projectsMap, usersMap]);
+  }, [allocations, projectsMap, usersMap, isFaculty, user]);
 
   const { page, rowsPerPage, handlePageChange, handleRowsPerPageChange, resetPage, paginate } = usePagination();
   const { search, setSearch, resetFilters, filteredData } = useTableFilter(
@@ -104,7 +115,6 @@ export default function AllocationsPage() {
   };
 
   const columns = [
-    { id: 'projectAllocationId', label: 'ID', minWidth: 60 },
     { id: 'projectTitle', label: 'Project', minWidth: 180 },
     { id: 'studentName', label: 'Student', minWidth: 150 },
     { id: 'facultyName', label: 'Faculty / Advisor', minWidth: 150 },
@@ -177,18 +187,20 @@ export default function AllocationsPage() {
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              color="error"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteTarget(row);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {isAdmin && (
+            <Tooltip title="Delete">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget(row);
+                }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       ),
     },
@@ -197,14 +209,14 @@ export default function AllocationsPage() {
   return (
     <Box>
       <PageHeader
-        title="Project Allocations"
-        subtitle="Manage student project allocations and faculty advisors"
+        title={isFaculty ? 'My Guided Allocations' : 'Project Allocations'}
+        subtitle={isFaculty ? 'Student allocations supervised by you' : 'Manage student project allocations and faculty advisors'}
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Allocations', href: '/allocations' },
         ]}
-        actionLabel="Add Allocation"
-        actionHref="/allocations/add"
+        actionLabel={isAdmin ? 'Add Allocation' : null}
+        actionHref={isAdmin ? '/allocations/add' : null}
       />
 
       {error && (
