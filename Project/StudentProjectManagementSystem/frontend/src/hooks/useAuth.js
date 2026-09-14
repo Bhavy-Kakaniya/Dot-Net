@@ -1,8 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { DEMO_CREDENTIALS } from '@/utils/constants';
-import { userService } from '@/services/api';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { authService } from '@/services/api';
 
 const AuthContext = createContext(null);
 
@@ -17,87 +16,64 @@ export function AuthProvider({ children }) {
         setUser(JSON.parse(stored));
       } catch {
         localStorage.removeItem('spms_user');
+        localStorage.removeItem('spms_token');
       }
-    } else {
-      // Set default authenticated user if none is stored
-      const defaultUser = {
-        id: 1,
-        name: 'Admin User',
-        email: DEMO_CREDENTIALS.email,
-        type: 'Admin',
-        department: 'Administration',
-      };
-      localStorage.setItem('spms_user', JSON.stringify(defaultUser));
-      setUser(defaultUser);
     }
     setLoading(false);
   }, []);
 
   const login = useCallback(async (email, password) => {
-    // 1. Check Demo Credentials
-    if (
-      (email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password) ||
-      (email?.toLowerCase() === 'admin@spms.edu' && password === 'admin123')
-    ) {
-      const authUser = {
-        id: 1,
-        name: 'Admin User',
-        email: email,
-        type: 'Admin',
-        department: 'Administration',
-      };
-      localStorage.setItem('spms_user', JSON.stringify(authUser));
-      setUser(authUser);
-      return { success: true };
-    }
-
-    // 2. Check against live backend users if available
     try {
-      const users = await userService.getAll();
-      const matched = users?.find(
-        (u) => u.email?.toLowerCase() === email?.toLowerCase().trim() && !u.isDeleted
-      );
+      const data = await authService.login(email, password);
 
-      if (matched) {
-        const authUser = {
-          id: matched.userId,
-          name: matched.fullName,
-          email: matched.email,
-          type: matched.userTypeId === 1 ? 'Student' : matched.userTypeId === 2 ? 'Faculty' : 'Admin',
-          department: 'Academic Department',
-        };
-        localStorage.setItem('spms_user', JSON.stringify(authUser));
-        setUser(authUser);
-        return { success: true };
-      }
-    } catch {
-      // Fallback
-    }
+      localStorage.setItem('spms_token', data.token);
 
-    // 3. Permissive fallback for testing if non-empty
-    if (email && password) {
       const authUser = {
-        id: 1,
-        name: email.split('@')[0],
-        email: email,
-        type: 'Admin',
-        department: 'Administration',
+        id: data.userId,
+        name: data.fullName,
+        email: data.email,
+        type: data.userType,
+        roles: data.roles || [],
       };
+
       localStorage.setItem('spms_user', JSON.stringify(authUser));
       setUser(authUser);
       return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message || 'Invalid credentials' };
     }
-
-    return { success: false, error: 'Please enter a valid email and password' };
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem('spms_user');
+    localStorage.removeItem('spms_token');
     setUser(null);
   }, []);
 
+  const roleFlags = useMemo(() => {
+    if (!user) return { isAdmin: false, isFaculty: false, isStudent: false, role: 'Guest' };
+
+    const userRoles = Array.isArray(user.roles) ? user.roles : [];
+    const isAdmin = userRoles.includes('Admin') || user.type === 'Admin';
+    const isFaculty = userRoles.includes('Faculty') || user.type === 'Faculty';
+    const isStudent = userRoles.includes('Student') || user.type === 'Student';
+
+    const role = isAdmin ? 'Admin' : isFaculty ? 'Faculty' : isStudent ? 'Student' : (user.type || 'User');
+
+    return { isAdmin, isFaculty, isStudent, role };
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        ...roleFlags,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

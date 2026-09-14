@@ -1,21 +1,18 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import initialUsers from '@/data/users';
-import initialRoles from '@/data/roles';
-import initialUserRoles from '@/data/userRoles';
-import initialProjects from '@/data/projects';
-import initialTasks from '@/data/tasks';
 import { userService, roleService, userRoleService, projectService, projectTaskService, projectAllocationService } from '@/services/api';
+import { useAuth } from '@/hooks/useAuth';
 
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
-  const [users, setUsers] = useState(initialUsers);
-  const [roles, setRoles] = useState(initialRoles);
-  const [userRoles, setUserRoles] = useState(initialUserRoles);
-  const [projects, setProjects] = useState(initialProjects);
-  const [tasks, setTasks] = useState(initialTasks);
+  const { isAuthenticated } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [userRoles, setUserRoles] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [allocations, setAllocations] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -94,8 +91,12 @@ export function DataProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    refreshData();
-  }, [refreshData]);
+    if (isAuthenticated) {
+      refreshData();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated, refreshData]);
 
   const getNextId = (items) => Math.max(0, ...items.map((i) => i.id || 0)) + 1;
 
