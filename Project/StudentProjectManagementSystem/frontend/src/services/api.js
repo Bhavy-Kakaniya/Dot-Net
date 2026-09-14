@@ -1,11 +1,24 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5093';
 
+function getToken() {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('spms_token');
+  }
+  return null;
+}
+
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
+
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
+
+  const token = getToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   const config = {
     ...options,
@@ -36,15 +49,35 @@ async function request(endpoint, options = {}) {
       }
     }
 
+    if (res.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('spms_token');
+        localStorage.removeItem('spms_user');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    }
+
     if (!res.ok) {
-      const errorMessage =
-        (data && typeof data === 'object' && (data.message || data.title || (data.errors && Object.values(data.errors).flat().join(', ')))) ||
-        res.statusText ||
-        'Request failed';
+      let errorMessage = res.statusText || 'Request failed';
+      if (data && typeof data === 'object') {
+        if (data.errors && typeof data.errors === 'object') {
+          const fieldErrors = Object.entries(data.errors)
+            .map(([field, errs]) => `${field}: ${Array.isArray(errs) ? errs.join(', ') : errs}`)
+            .join(' | ');
+          if (fieldErrors) errorMessage = fieldErrors;
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (data.title) {
+          errorMessage = data.title;
+        }
+      } else if (typeof data === 'string' && data.trim()) {
+        errorMessage = data;
+      }
       throw new Error(errorMessage);
     }
 
-    // Unwrap ApiResponse<T> if wrapped
     if (data && typeof data === 'object' && Object.prototype.hasOwnProperty.call(data, 'success')) {
       if (!data.success) {
         throw new Error(data.message || 'API request indicated failure');
@@ -66,7 +99,10 @@ export const api = {
   delete: (endpoint, options) => request(endpoint, { ...options, method: 'DELETE' }),
 };
 
-// Project Allocation Service (FK: ProjectId, StudentId, FacultyId)
+export const authService = {
+  login: (email, password) => api.post('/api/Auth/login', { email, password }),
+};
+
 export const projectAllocationService = {
   getAll: () => api.get('/api/ProjectAllocation'),
   getById: (id) => api.get(`/api/ProjectAllocation/${id}`),
@@ -75,7 +111,6 @@ export const projectAllocationService = {
   delete: (id) => api.delete(`/api/ProjectAllocation/${id}`),
 };
 
-// Project Task Service (FK: ProjectAllocationId, TaskStatusId, TaskPriorityId)
 export const projectTaskService = {
   getAll: () => api.get('/api/ProjectTask'),
   getById: (id) => api.get(`/api/ProjectTask/${id}`),
@@ -84,7 +119,6 @@ export const projectTaskService = {
   delete: (id) => api.delete(`/api/ProjectTask/${id}`),
 };
 
-// Project Service
 export const projectService = {
   getAll: () => api.get('/api/Project'),
   getById: (id) => api.get(`/api/Project/${id}`),
@@ -93,7 +127,6 @@ export const projectService = {
   delete: (id) => api.delete(`/api/Project/${id}`),
 };
 
-// User Service
 export const userService = {
   getAll: () => api.get('/api/User'),
   getById: (id) => api.get(`/api/User/${id}`),
@@ -102,7 +135,6 @@ export const userService = {
   delete: (id) => api.delete(`/api/User/${id}`),
 };
 
-// User Type Service
 export const userTypeService = {
   getAll: () => api.get('/api/UserType'),
   getById: (id) => api.get(`/api/UserType/${id}`),
@@ -111,7 +143,6 @@ export const userTypeService = {
   delete: (id) => api.delete(`/api/UserType/${id}`),
 };
 
-// Role Service
 export const roleService = {
   getAll: () => api.get('/api/Role'),
   getById: (id) => api.get(`/api/Role/${id}`),
@@ -120,7 +151,6 @@ export const roleService = {
   delete: (id) => api.delete(`/api/Role/${id}`),
 };
 
-// User Role Service
 export const userRoleService = {
   getAll: () => api.get('/api/UserRole'),
   getById: (id) => api.get(`/api/UserRole/${id}`),
@@ -129,7 +159,6 @@ export const userRoleService = {
   delete: (id) => api.delete(`/api/UserRole/${id}`),
 };
 
-// Status Service
 export const statusService = {
   getAll: () => api.get('/api/Status'),
   getById: (id) => api.get(`/api/Status/${id}`),
@@ -138,7 +167,6 @@ export const statusService = {
   delete: (id) => api.delete(`/api/Status/${id}`),
 };
 
-// Task Priority Service
 export const priorityService = {
   getAll: () => api.get('/api/ProjectTaskPriority'),
   getById: (id) => api.get(`/api/ProjectTaskPriority/${id}`),
@@ -147,7 +175,6 @@ export const priorityService = {
   delete: (id) => api.delete(`/api/ProjectTaskPriority/${id}`),
 };
 
-// Dashboard LINQ APIs Service
 export const dashboardService = {
   getSummary: () => api.get('/api/Dashboard/summary'),
   getTotalStudents: () => api.get('/api/Dashboard/total-students'),
