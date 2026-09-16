@@ -1,4 +1,5 @@
 step 0: create new project
+      : always ignore obj and bin files while uploading it anywhere
 
 step 1: in appsettings.json add connection string -> default connection
 
