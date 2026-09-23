@@ -72,7 +72,10 @@ export default function Navbar({ onMenuClick }) {
         </IconButton>
 
         <IconButton onClick={(e) => setProfileAnchor(e.currentTarget)} sx={{ p: 0.5 }}>
-          <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: 14 }}>
+          <Avatar
+            src={user?.profilePicturePath ? `http://localhost:5093/${user.profilePicturePath}` : undefined}
+            sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: 14 }}
+          >
             {getInitials(user?.name)}
           </Avatar>
         </IconButton>

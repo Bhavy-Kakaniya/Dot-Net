@@ -63,6 +63,15 @@ export function AuthProvider({ children }) {
     return { isAdmin, isFaculty, isStudent, role };
   }, [user]);
 
+  const updateUser = useCallback((updatedFields) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updatedFields };
+      localStorage.setItem('spms_user', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -70,6 +79,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         logout,
+        updateUser,
         isAuthenticated: !!user,
         ...roleFlags,
       }}

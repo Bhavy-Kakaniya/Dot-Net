@@ -15,6 +15,10 @@ async function request(endpoint, options = {}) {
     ...(options.headers || {}),
   };
 
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
+
   const token = getToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -112,7 +116,10 @@ export const projectAllocationService = {
 };
 
 export const projectTaskService = {
-  getAll: () => api.get('/api/ProjectTask'),
+  getAll: (pageNumber, pageSize) => {
+    const query = pageNumber && pageSize ? `?pageNumber=${pageNumber}&pageSize=${pageSize}` : '';
+    return api.get(`/api/ProjectTask${query}`);
+  },
   getById: (id) => api.get(`/api/ProjectTask/${id}`),
   create: (dto) => api.post('/api/ProjectTask', dto),
   update: (id, dto) => api.put(`/api/ProjectTask/${id}`, dto),
@@ -120,18 +127,25 @@ export const projectTaskService = {
 };
 
 export const projectService = {
-  getAll: () => api.get('/api/Project'),
-  getById: (id) => api.get(`/api/Project/${id}`),
-  create: (dto) => api.post('/api/Project', dto),
-  update: (id, dto) => api.put(`/api/Project/${id}`, dto),
-  delete: (id) => api.delete(`/api/Project/${id}`),
+  getAll: (pageNumber, pageSize) => {
+    const query = pageNumber && pageSize ? `?pageNumber=${pageNumber}&pageSize=${pageSize}` : '';
+    return api.get(`/api/v1/Project${query}`);
+  },
+  getById: (id) => api.get(`/api/v1/Project/${id}`),
+  create: (dto) => api.post('/api/v1/Project', dto),
+  update: (id, dto) => api.put(`/api/v1/Project/${id}`, dto),
+  delete: (id) => api.delete(`/api/v1/Project/${id}`),
 };
 
 export const userService = {
-  getAll: () => api.get('/api/User'),
+  getAll: (pageNumber, pageSize) => {
+    const query = pageNumber && pageSize ? `?pageNumber=${pageNumber}&pageSize=${pageSize}` : '';
+    return api.get(`/api/User${query}`);
+  },
   getById: (id) => api.get(`/api/User/${id}`),
   create: (dto) => api.post('/api/User', dto),
   update: (id, dto) => api.put(`/api/User/${id}`, dto),
+  uploadProfilePicture: (id, formData) => api.post(`/api/User/${id}/profile-picture`, formData),
   delete: (id) => api.delete(`/api/User/${id}`),
 };
 
