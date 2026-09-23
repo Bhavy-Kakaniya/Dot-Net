@@ -1,5 +1,5 @@
 using FluentValidation;
-using StudentProjectManagementSystem.DTOs.user;
+using StudentProjectManagementSystem.DTOs.User;
 
 namespace StudentProjectManagementSystem.Validators
 {
@@ -51,10 +51,9 @@ namespace StudentProjectManagementSystem.Validators
                 .WithMessage("Mobile number must be between 10 and 15 digits");
 
             RuleFor(x => x.ProfilePicturePath)
-                .NotEmpty()
-                .WithMessage("Profile picture path is required")
                 .MaximumLength(500)
-                .WithMessage("Profile picture path cannot exceed 500 characters");
+                .WithMessage("Profile picture path cannot exceed 500 characters")
+                .When(x => !string.IsNullOrEmpty(x.ProfilePicturePath));
         }
     }
 
@@ -96,10 +95,9 @@ namespace StudentProjectManagementSystem.Validators
                 .WithMessage("Mobile number must be between 10 and 15 digits");
 
             RuleFor(x => x.ProfilePicturePath)
-                .NotEmpty()
-                .WithMessage("Profile picture path is required")
                 .MaximumLength(500)
-                .WithMessage("Profile picture path cannot exceed 500 characters");
+                .WithMessage("Profile picture path cannot exceed 500 characters")
+                .When(x => !string.IsNullOrEmpty(x.ProfilePicturePath));
         }
     }
 }
