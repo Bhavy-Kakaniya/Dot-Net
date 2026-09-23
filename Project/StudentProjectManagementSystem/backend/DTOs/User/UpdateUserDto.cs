@@ -1,4 +1,4 @@
-namespace StudentProjectManagementSystem.DTOs.user
+namespace StudentProjectManagementSystem.DTOs.User
 {
     public class UpdateUserDto
     {
