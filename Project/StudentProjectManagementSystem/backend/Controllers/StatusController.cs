@@ -21,6 +21,7 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Faculty,Student")]
         public async Task<ActionResult<ApiResponse<IEnumerable<StatusResponseDto>>>> GetAllStatuses()
         {
             try
@@ -41,7 +42,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> GetStatusById(int id)
+        [Authorize(Roles = "Admin,Faculty,Student")]
+        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> GetStatusById([FromRoute] int id)
         {
             try
             {
@@ -66,7 +68,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> CreateStatus(CreateStatusDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> CreateStatus([FromBody] CreateStatusDto dto)
         {
             try
             {
@@ -93,7 +96,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> UpdateStatus(int id, UpdateStatusDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<StatusResponseDto>>> UpdateStatus([FromRoute] int id, [FromBody] UpdateStatusDto dto)
         {
             try
             {
@@ -121,7 +125,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteStatus(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<object>>> DeleteStatus([FromRoute] int id)
         {
             try
             {

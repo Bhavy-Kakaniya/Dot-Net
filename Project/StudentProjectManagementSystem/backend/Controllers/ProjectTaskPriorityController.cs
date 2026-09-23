@@ -20,6 +20,7 @@ public class ProjectTaskPriorityController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Faculty,Student")]
     public async Task<ActionResult<ApiResponse<IEnumerable<ProjectTaskPriority>>>> GetAll()
     {
         try
@@ -34,7 +35,8 @@ public class ProjectTaskPriorityController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> GetById(int id)
+    [Authorize(Roles = "Admin,Faculty,Student")]
+    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> GetById([FromRoute] int id)
     {
         try
         {
@@ -52,7 +54,8 @@ public class ProjectTaskPriorityController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> Create(ProjectTaskPriority priority)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> Create([FromBody] ProjectTaskPriority priority)
     {
         try
         {
@@ -67,7 +70,8 @@ public class ProjectTaskPriorityController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> Update(int id, ProjectTaskPriority priority)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<ProjectTaskPriority>>> Update([FromRoute] int id, [FromBody] ProjectTaskPriority priority)
     {
         try
         {
@@ -88,7 +92,8 @@ public class ProjectTaskPriorityController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete([FromRoute] int id)
     {
         try
         {

@@ -9,8 +9,8 @@ using StudentProjectManagementSystem.Models;
 namespace StudentProjectManagementSystem.Controllers
 {
     [Authorize]
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ProjectTaskController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -21,11 +21,21 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<IEnumerable<ProjectTaskResponseDto>>>> GetAllProjectTasks()
+        [Authorize(Roles = "Admin,Faculty,Student")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ProjectTaskResponseDto>>>> GetAllProjectTasks(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             try
             {
-                var tasks = await _context.ProjectTasks.ToListAsync();
+                if (pageNumber < 1) pageNumber = 1;
+                if (pageSize < 1) pageSize = 10;
+
+                var tasks = await _context.ProjectTasks
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
                 var response = tasks.Select(MapToDto);
                 return Ok(ApiResponse<IEnumerable<ProjectTaskResponseDto>>.SuccessResponse("Project tasks retrieved successfully", response));
             }
@@ -36,7 +46,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<ProjectTaskResponseDto>>> GetProjectTaskById(int id)
+        [Authorize(Roles = "Admin,Faculty,Student")]
+        public async Task<ActionResult<ApiResponse<ProjectTaskResponseDto>>> GetProjectTaskById([FromRoute] int id)
         {
             try
             {
@@ -54,7 +65,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<ProjectTaskResponseDto>>> CreateProjectTask(CreateProjectTaskDto dto)
+        [Authorize(Roles = "Admin,Faculty")]
+        public async Task<ActionResult<ApiResponse<ProjectTaskResponseDto>>> CreateProjectTask([FromBody] CreateProjectTaskDto dto)
         {
             try
             {
@@ -100,7 +112,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<ProjectTaskResponseDto>>> UpdateProjectTask(int id, UpdateProjectTaskDto dto)
+        [Authorize(Roles = "Admin,Faculty,Student")]
+        public async Task<ActionResult<ApiResponse<ProjectTaskResponseDto>>> UpdateProjectTask([FromRoute] int id, [FromBody] UpdateProjectTaskDto dto)
         {
             try
             {
@@ -145,7 +158,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteProjectTask(int id)
+        [Authorize(Roles = "Admin,Faculty")]
+        public async Task<ActionResult<ApiResponse<object>>> DeleteProjectTask([FromRoute] int id)
         {
             try
             {

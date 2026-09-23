@@ -21,6 +21,7 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Faculty")]
         public async Task<ActionResult<ApiResponse<IEnumerable<RoleResponseDto>>>> GetAllRoles()
         {
             try
@@ -41,14 +42,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> GetRoleById(int id)
+        [Authorize(Roles = "Admin,Faculty")]
+        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> GetRoleById([FromRoute] int id)
         {
             try
             {
                 var role = await _context.Roles.FindAsync(id);
                 if (role == null)
                 {
-                    return NotFound(ApiResponse<RoleResponseDto>.ErrorResponse($"Role with {id} not found"));
+                    return NotFound(ApiResponse<RoleResponseDto>.ErrorResponse($"Role with ID {id} not found"));
                 }
 
                 var response = new RoleResponseDto
@@ -66,7 +68,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> CreateRole(CreateRoleDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> CreateRole([FromBody] CreateRoleDto dto)
         {
             try
             {
@@ -93,14 +96,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> UpdateRole(int id, UpdateRoleDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<RoleResponseDto>>> UpdateRole([FromRoute] int id, [FromBody] UpdateRoleDto dto)
         {
             try
             {
                 var role = await _context.Roles.FindAsync(id);
                 if (role == null)
                 {
-                    return NotFound(ApiResponse<RoleResponseDto>.ErrorResponse($"Role with {id} not found"));
+                    return NotFound(ApiResponse<RoleResponseDto>.ErrorResponse($"Role with ID {id} not found"));
                 }
 
                 role.RoleName = dto.RoleName;
@@ -122,14 +126,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteRole(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<object>>> DeleteRole([FromRoute] int id)
         {
             try
             {
                 var role = await _context.Roles.FindAsync(id);
                 if (role == null)
                 {
-                    return NotFound(ApiResponse<object>.ErrorResponse($"Role with {id} not found"));
+                    return NotFound(ApiResponse<object>.ErrorResponse($"Role with ID {id} not found"));
                 }
 
                 _context.Roles.Remove(role);

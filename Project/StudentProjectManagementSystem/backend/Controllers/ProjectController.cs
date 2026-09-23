@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,8 @@ namespace StudentProjectManagementSystem.Controllers
 {
     [Authorize]
     [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Route("api/[controller]")]
     public class ProjectController : ControllerBase
     {
@@ -20,15 +23,25 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<ApiResponse<IEnumerable<ProjectResponseDto>>>> GetAllProjects()
+        [Authorize(Roles = "Admin,Faculty,Student")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<ProjectResponseDto>>>> GetAllProjects(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             try
             {
-                var projects = await _context.Projects.Select(p => new ProjectResponseDto
-                {
-                    ProjectId = p.ProjectId,
-                    ProjectTitle = p.ProjectTitle
-                }).ToListAsync();
+                if (pageNumber < 1) pageNumber = 1;
+                if (pageSize < 1) pageSize = 10;
+
+                var projects = await _context.Projects
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(p => new ProjectResponseDto
+                    {
+                        ProjectId = p.ProjectId,
+                        ProjectTitle = p.ProjectTitle
+                    }).ToListAsync();
+
                 return Ok(ApiResponse<IEnumerable<ProjectResponseDto>>.SuccessResponse("Projects retrieved successfully", projects));
             }
             catch (Exception ex)
@@ -38,15 +51,18 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<ProjectResponseDto>>> GetProjectById(int id)
+        [Authorize(Roles = "Admin,Faculty,Student")]
+        public async Task<ActionResult<ApiResponse<ProjectResponseDto>>> GetProjectById([FromRoute] int id)
         {
             try
             {
-                var project = await _context.Projects.Where(p => p.ProjectId == id).Select(p => new ProjectResponseDto
-                {
-                    ProjectId = p.ProjectId,
-                    ProjectTitle = p.ProjectTitle
-                }).FirstOrDefaultAsync();
+                var project = await _context.Projects
+                    .Where(p => p.ProjectId == id)
+                    .Select(p => new ProjectResponseDto
+                    {
+                        ProjectId = p.ProjectId,
+                        ProjectTitle = p.ProjectTitle
+                    }).FirstOrDefaultAsync();
 
                 if (project == null)
                 {
@@ -61,7 +77,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<ProjectResponseDto>>> CreateProject(CreateProjectDto dto)
+        [Authorize(Roles = "Admin,Faculty")]
+        public async Task<ActionResult<ApiResponse<ProjectResponseDto>>> CreateProject([FromBody] CreateProjectDto dto)
         {
             try
             {
@@ -85,7 +102,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<ProjectResponseDto>>> UpdateProject(int id, UpdateProjectDto dto)
+        [Authorize(Roles = "Admin,Faculty")]
+        public async Task<ActionResult<ApiResponse<ProjectResponseDto>>> UpdateProject([FromRoute] int id, [FromBody] UpdateProjectDto dto)
         {
             try
             {
@@ -110,7 +128,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteProject(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<object>>> DeleteProject([FromRoute] int id)
         {
             try
             {

@@ -21,6 +21,7 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Faculty")]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserTypeResponseDto>>>> GetAllUserTypes()
         {
             try
@@ -41,14 +42,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<UserTypeResponseDto>>> GetUserTypeById(int id)
+        [Authorize(Roles = "Admin,Faculty")]
+        public async Task<ActionResult<ApiResponse<UserTypeResponseDto>>> GetUserTypeById([FromRoute] int id)
         {
             try
             {
                 var userType = await _context.UserTypes.FindAsync(id);
                 if (userType == null)
                 {
-                    return NotFound(ApiResponse<UserTypeResponseDto>.ErrorResponse($"UserType with {id} not found"));
+                    return NotFound(ApiResponse<UserTypeResponseDto>.ErrorResponse($"UserType with ID {id} not found"));
                 }
 
                 var response = new UserTypeResponseDto
@@ -66,7 +68,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<UserTypeResponseDto>>> CreateUserType(CreateUserTypeDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<UserTypeResponseDto>>> CreateUserType([FromBody] CreateUserTypeDto dto)
         {
             try
             {
@@ -93,14 +96,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<UserTypeResponseDto>>> UpdateUserType(int id, UpdateUserTypeDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<UserTypeResponseDto>>> UpdateUserType([FromRoute] int id, [FromBody] UpdateUserTypeDto dto)
         {
             try
             {
                 var userType = await _context.UserTypes.FindAsync(id);
                 if (userType == null)
                 {
-                    return NotFound(ApiResponse<UserTypeResponseDto>.ErrorResponse($"UserType with {id} not found"));
+                    return NotFound(ApiResponse<UserTypeResponseDto>.ErrorResponse($"UserType with ID {id} not found"));
                 }
 
                 userType.UserTypeName = dto.UserTypeName;
@@ -122,14 +126,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteUserType(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<object>>> DeleteUserType([FromRoute] int id)
         {
             try
             {
                 var userType = await _context.UserTypes.FindAsync(id);
                 if (userType == null)
                 {
-                    return NotFound(ApiResponse<object>.ErrorResponse($"UserType with {id} not found"));
+                    return NotFound(ApiResponse<object>.ErrorResponse($"UserType with ID {id} not found"));
                 }
 
                 _context.UserTypes.Remove(userType);

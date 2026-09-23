@@ -21,6 +21,7 @@ public class ProjectAllocationController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Faculty,Student")]
     public async Task<ActionResult<ApiResponse<IEnumerable<ProjectAllocationResponseDto>>>> GetAll()
     {
         try
@@ -36,7 +37,8 @@ public class ProjectAllocationController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> GetById(int id)
+    [Authorize(Roles = "Admin,Faculty,Student")]
+    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> GetById([FromRoute] int id)
     {
         try
         {
@@ -54,7 +56,8 @@ public class ProjectAllocationController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Create(CreateProjectAllocationDto dto)
+    [Authorize(Roles = "Admin,Faculty")]
+    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Create([FromBody] CreateProjectAllocationDto dto)
     {
         try
         {
@@ -98,7 +101,8 @@ public class ProjectAllocationController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Update(int id, UpdateProjectAllocationDto dto)
+    [Authorize(Roles = "Admin,Faculty")]
+    public async Task<ActionResult<ApiResponse<ProjectAllocationResponseDto>>> Update([FromRoute] int id, [FromBody] UpdateProjectAllocationDto dto)
     {
         try
         {
@@ -135,7 +139,8 @@ public class ProjectAllocationController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete([FromRoute] int id)
     {
         try
         {

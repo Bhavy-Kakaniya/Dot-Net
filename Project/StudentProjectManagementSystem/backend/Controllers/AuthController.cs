@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentProjectManagementSystem.Data;
@@ -20,8 +21,9 @@ namespace StudentProjectManagementSystem.Controllers
             _tokenService = tokenService;
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Login(LoginDto dto)
+        public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Login([FromBody] LoginDto dto)
         {
             try
             {

@@ -21,6 +21,7 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,Faculty")]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserRoleResponseDto>>>> GetAllUserRoles()
         {
             try
@@ -41,14 +42,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<UserRoleResponseDto>>> GetUserRoleById(int id)
+        [Authorize(Roles = "Admin,Faculty")]
+        public async Task<ActionResult<ApiResponse<UserRoleResponseDto>>> GetUserRoleById([FromRoute] int id)
         {
             try
             {
                 var userRole = await _context.UserRoles.FindAsync(id);
                 if (userRole == null)
                 {
-                    return NotFound(ApiResponse<UserRoleResponseDto>.ErrorResponse($"UserRole with {id} not found"));
+                    return NotFound(ApiResponse<UserRoleResponseDto>.ErrorResponse($"UserRole with ID {id} not found"));
                 }
 
                 var response = new UserRoleResponseDto
@@ -66,7 +68,8 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<UserRoleResponseDto>>> CreateUserRole(CreateUserRoleDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<UserRoleResponseDto>>> CreateUserRole([FromBody] CreateUserRoleDto dto)
         {
             try
             {
@@ -103,14 +106,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<UserRoleResponseDto>>> UpdateUserRole(int id, UpdateUserRoleDto dto)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<UserRoleResponseDto>>> UpdateUserRole([FromRoute] int id, [FromBody] UpdateUserRoleDto dto)
         {
             try
             {
                 var userRole = await _context.UserRoles.FindAsync(id);
                 if (userRole == null)
                 {
-                    return NotFound(ApiResponse<UserRoleResponseDto>.ErrorResponse($"UserRole with {id} not found"));
+                    return NotFound(ApiResponse<UserRoleResponseDto>.ErrorResponse($"UserRole with ID {id} not found"));
                 }
 
                 if (!await _context.Users.AnyAsync(u => u.UserId == dto.UserId))
@@ -142,14 +146,15 @@ namespace StudentProjectManagementSystem.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteUserRole(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<object>>> DeleteUserRole([FromRoute] int id)
         {
             try
             {
                 var userRole = await _context.UserRoles.FindAsync(id);
                 if (userRole == null)
                 {
-                    return NotFound(ApiResponse<object>.ErrorResponse($"UserRole with {id} not found"));
+                    return NotFound(ApiResponse<object>.ErrorResponse($"UserRole with ID {id} not found"));
                 }
 
                 _context.UserRoles.Remove(userRole);

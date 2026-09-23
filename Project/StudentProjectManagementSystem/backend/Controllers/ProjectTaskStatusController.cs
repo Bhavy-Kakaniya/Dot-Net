@@ -20,6 +20,7 @@ public class ProjectTaskStatusController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Faculty,Student")]
     public async Task<ActionResult<ApiResponse<IEnumerable<ProjectTaskStatus>>>> GetAll()
     {
         try
@@ -34,7 +35,8 @@ public class ProjectTaskStatusController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectTaskStatus>>> GetById(int id)
+    [Authorize(Roles = "Admin,Faculty,Student")]
+    public async Task<ActionResult<ApiResponse<ProjectTaskStatus>>> GetById([FromRoute] int id)
     {
         try
         {
@@ -52,7 +54,8 @@ public class ProjectTaskStatusController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<ProjectTaskStatus>>> Create(ProjectTaskStatus status)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<ProjectTaskStatus>>> Create([FromBody] ProjectTaskStatus status)
     {
         try
         {
@@ -67,7 +70,8 @@ public class ProjectTaskStatusController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ApiResponse<ProjectTaskStatus>>> Update(int id, ProjectTaskStatus status)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<ProjectTaskStatus>>> Update([FromRoute] int id, [FromBody] ProjectTaskStatus status)
     {
         try
         {
@@ -88,7 +92,8 @@ public class ProjectTaskStatusController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ApiResponse<object>>> Delete(int id)
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete([FromRoute] int id)
     {
         try
         {
