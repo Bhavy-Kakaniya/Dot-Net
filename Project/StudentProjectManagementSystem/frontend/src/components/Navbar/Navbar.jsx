@@ -20,7 +20,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { getInitials } from '@/utils/formatters';
+import { getInitials, getProfileImageUrl } from '@/utils/formatters';
 import GlobalSearch from '@/components/GlobalSearch/GlobalSearch';
 import { SIDEBAR_WIDTH } from '@/utils/constants';
 
@@ -73,7 +73,7 @@ export default function Navbar({ onMenuClick }) {
 
         <IconButton onClick={(e) => setProfileAnchor(e.currentTarget)} sx={{ p: 0.5 }}>
           <Avatar
-            src={user?.profilePicturePath ? `http://localhost:5093/${user.profilePicturePath}` : undefined}
+            src={getProfileImageUrl(user?.profilePicturePath)}
             sx={{ width: 36, height: 36, bgcolor: 'primary.main', fontSize: 14 }}
           >
             {getInitials(user?.name)}

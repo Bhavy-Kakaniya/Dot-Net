@@ -63,7 +63,8 @@ namespace StudentProjectManagementSystem.Controllers
                     FullName = user.FullName,
                     Email = user.Email,
                     UserType = user.UserType != null ? user.UserType.UserTypeName : "",
-                    Roles = roles
+                    Roles = roles,
+                    ProfilePicturePath = user.ProfilePicturePath
                 };
 
                 return Ok(ApiResponse<LoginResponseDto>.SuccessResponse("Login successful", response));

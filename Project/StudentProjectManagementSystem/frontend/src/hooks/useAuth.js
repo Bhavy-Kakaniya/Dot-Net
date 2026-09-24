@@ -34,6 +34,7 @@ export function AuthProvider({ children }) {
         email: data.email,
         type: data.userType,
         roles: data.roles || [],
+        profilePicturePath: data.profilePicturePath || '',
       };
 
       localStorage.setItem('spms_user', JSON.stringify(authUser));

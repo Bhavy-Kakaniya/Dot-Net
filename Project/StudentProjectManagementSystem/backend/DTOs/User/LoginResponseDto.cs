@@ -8,5 +8,6 @@ namespace StudentProjectManagementSystem.DTOs.User
         public string Email { get; set; } = string.Empty;
         public string UserType { get; set; } = string.Empty;
         public List<string> Roles { get; set; } = new List<string>();
+        public string ProfilePicturePath { get; set; } = string.Empty;
     }
 }

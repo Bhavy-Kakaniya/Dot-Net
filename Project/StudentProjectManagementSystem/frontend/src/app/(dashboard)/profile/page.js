@@ -20,9 +20,7 @@ import StatusChip from '@/components/StatusChip/StatusChip';
 import { useAuth } from '@/hooks/useAuth';
 import { useSnackbar } from '@/hooks/useSnackbar';
 import { userService } from '@/services/api';
-import { getInitials } from '@/utils/formatters';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5093';
+import { getInitials, getProfileImageUrl } from '@/utils/formatters';
 
 export default function ProfilePage() {
 	const { user, updateUser } = useAuth();
@@ -60,7 +58,7 @@ export default function ProfilePage() {
 					console.error('Failed to fetch profile details:', err);
 				});
 		}
-	}, [user?.id, updateUser]);
+	}, [user?.id, user?.profilePicturePath, updateUser]);
 
 	const handleChange = (field) => (e) => {
 		setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -94,9 +92,7 @@ export default function ProfilePage() {
 		}
 	};
 
-	const avatarSrc = userData?.profilePicturePath || user?.profilePicturePath
-		? `${API_BASE_URL}/${userData?.profilePicturePath || user?.profilePicturePath}`
-		: undefined;
+	const avatarSrc = getProfileImageUrl(userData?.profilePicturePath || user?.profilePicturePath);
 
 	return (
 		<Box>

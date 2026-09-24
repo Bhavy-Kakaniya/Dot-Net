@@ -18,7 +18,7 @@ import StatusChip from '@/components/StatusChip/StatusChip';
 import Loader from '@/components/Loader/Loader';
 import ConfirmDialog from '@/components/ConfirmDialog/ConfirmDialog';
 import { useSnackbar } from '@/hooks/useSnackbar';
-import { getInitials } from '@/utils/formatters';
+import { getInitials, getProfileImageUrl } from '@/utils/formatters';
 import { userService, userTypeService, userRoleService, roleService } from '@/services/api';
 
 export default function ViewUserPage({ params }) {
@@ -129,7 +129,7 @@ export default function ViewUserPage({ params }) {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, textAlign: 'center' }}>
             <Avatar
-              src={user.profilePicturePath || ''}
+              src={getProfileImageUrl(user.profilePicturePath)}
               sx={{ width: 80, height: 80, mx: 'auto', mb: 2, bgcolor: 'primary.main', fontSize: 28 }}
             >
               {getInitials(user.fullName)}

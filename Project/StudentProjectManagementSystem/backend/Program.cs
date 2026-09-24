@@ -79,8 +79,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseStaticFiles();
 app.UseCors("AllowFrontend");
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
